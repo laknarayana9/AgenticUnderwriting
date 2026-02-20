@@ -1,30 +1,34 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Optional, Dict, Any
 import uuid
 from datetime import datetime
 
-from models.schemas import QuoteSubmission, RunRecord, WorkflowState
+from models.schemas import (
+    QuoteSubmission, RunRecord, RunStatusResponse, 
+    QuoteRunRequest, QuoteRunResponse, RunListResponse
+)
 from workflows.graph import run_underwriting_workflow
 from workflows.agentic_graph import run_agentic_underwriting_workflow
 from storage.database import db
+from config import settings
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Agentic Quote-to-Underwrite API",
-    description="An agentic workflow for insurance quote processing and underwriting",
-    version="1.0.0"
+    title=settings.title,
+    description=settings.description,
+    version=settings.version
 )
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify allowed origins
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins,
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cors_allow_headers,
 )
 
 # Mount static files
