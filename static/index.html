@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Quote-to-Underwrite Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading { display: none; }
+        .loading.show { display: block; }
+        .result { display: none; }
+        .result.show { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Agentic Quote-to-Underwrite</h1>
+            <p class="text-gray-600">Insurance quote processing with AI-powered underwriting</p>
+        </header>
+
+        <!-- Quote Form -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Submit Quote</h2>
+            <form id="quoteForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Applicant Name</label>
+                        <input type="text" id="applicant_name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Property Address</label>
+                        <input type="text" id="address" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                        <select id="property_type" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="single_family">Single Family</option>
+                            <option value="condo">Condominium</option>
+                            <option value="townhouse">Townhouse</option>
+                            <option value="commercial">Commercial</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Coverage Amount ($)</label>
+                        <input type="number" id="coverage_amount" required min="10000" step="1000"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Construction Year</label>
+                        <input type="number" id="construction_year" min="1800" max="2024"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Square Footage</label>
+                        <input type="number" id="square_footage" min="100"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Roof Type</label>
+                        <select id="roof_type"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select...</option>
+                            <option value="asphalt_shingle">Asphalt Shingle</option>
+                            <option value="metal">Metal</option>
+                            <option value="tile">Tile</option>
+                            <option value="wood_shake">Wood Shake</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Foundation Type</label>
+                        <select id="foundation_type"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Select...</option>
+                            <option value="concrete">Concrete</option>
+                            <option value="crawlspace">Crawlspace</option>
+                            <option value="basement">Basement</option>
+                            <option value="slab">Slab</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Additional Information</label>
+                    <textarea id="additional_info" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="use_agentic" class="mr-2">
+                        <span class="text-sm text-gray-700">Enable Agentic Behavior</span>
+                    </label>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    Process Quote
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-blue-800">Processing your quote...</p>
+            <p class="text-sm text-blue-600 mt-2">Running underwriting workflow with AI analysis</p>
+        </div>
+
+        <!-- Results -->
+        <div id="result" class="result space-y-6">
+            <!-- Decision -->
+            <div id="decisionCard" class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-3">Underwriting Decision</h3>
+                <div id="decisionContent"></div>
+            </div>
+
+            <!-- Premium -->
+            <div id="premiumCard" class="bg-white rounded-lg shadow-md p-6" style="display: none;">
+                <h3 class="text-lg font-semibold mb-3">Premium Calculation</h3>
+                <div id="premiumContent"></div>
+            </div>
+
+            <!-- Required Questions -->
+            <div id="questionsCard" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6" style="display: none;">
+                <h3 class="text-lg font-semibold mb-3 text-yellow-800">Additional Information Required</h3>
+                <div id="questionsContent"></div>
+            </div>
+
+            <!-- Citations -->
+            <div id="citationsCard" class="bg-white rounded-lg shadow-md p-6" style="display: none;">
+                <h3 class="text-lg font-semibold mb-3">Guideline Citations</h3>
+                <div id="citationsContent"></div>
+            </div>
+
+            <!-- Run Details -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-3">Run Details</h3>
+                <div id="runDetails"></div>
+            </div>
+        </div>
+
+        <!-- Recent Runs -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <h3 class="text-lg font-semibold mb-3">Recent Runs</h3>
+            <div id="recentRuns" class="space-y-2">
+                <p class="text-gray-500">Loading recent runs...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // Form submission
+        document.getElementById('quoteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                submission: {
+                    applicant_name: document.getElementById('applicant_name').value,
+                    address: document.getElementById('address').value,
+                    property_type: document.getElementById('property_type').value,
+                    coverage_amount: parseFloat(document.getElementById('coverage_amount').value),
+                    construction_year: document.getElementById('construction_year').value ? 
+                                    parseInt(document.getElementById('construction_year').value) : null,
+                    square_footage: document.getElementById('square_footage').value ? 
+                                     parseFloat(document.getElementById('square_footage').value) : null,
+                    roof_type: document.getElementById('roof_type').value || null,
+                    foundation_type: document.getElementById('foundation_type').value || null,
+                    additional_info: document.getElementById('additional_info').value || null
+                },
+                use_agentic: document.getElementById('use_agentic').checked,
+                additional_answers: {}
+            };
+
+            // Show loading
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+
+            try {
+                const response = await fetch(`${API_BASE}/quote/run`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    displayResults(result);
+                } else {
+                    alert(`Error: ${result.detail}`);
+                }
+            } catch (error) {
+                alert(`Network error: ${error.message}`);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        });
+
+        function displayResults(result) {
+            // Decision
+            const decisionContent = document.getElementById('decisionContent');
+            const decisionColors = {
+                'ACCEPT': 'bg-green-100 text-green-800',
+                'REFER': 'bg-yellow-100 text-yellow-800',
+                'DECLINE': 'bg-red-100 text-red-800'
+            };
+            
+            decisionContent.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-2xl font-bold">${result.decision.decision}</span>
+                    <span class="px-3 py-1 rounded-full text-sm font-medium ${decisionColors[result.decision.decision]}">
+                        ${result.decision.decision}
+                    </span>
+                </div>
+                <p class="text-gray-700 mb-4">${result.decision.rationale}</p>
+                <div class="text-sm text-gray-600">
+                    <strong>Next Steps:</strong>
+                    <ul class="list-disc list-inside mt-1">
+                        ${result.decision.next_steps.map(step => `<li>${step}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            // Premium (if available)
+            if (result.premium) {
+                document.getElementById('premiumCard').style.display = 'block';
+                document.getElementById('premiumContent').innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <span class="text-sm text-gray-600">Base Premium</span>
+                            <p class="text-lg font-semibold">$${result.premium.base_premium}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-600">Hazard Surcharge</span>
+                            <p class="text-lg font-semibold">$${result.premium.hazard_surcharge}</p>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-600">Total Premium</span>
+                            <p class="text-xl font-bold text-blue-600">$${result.premium.total_premium}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Required Questions
+            if (result.required_questions && result.required_questions.length > 0) {
+                document.getElementById('questionsCard').style.display = 'block';
+                document.getElementById('questionsContent').innerHTML = `
+                    <ul class="space-y-2">
+                        ${result.required_questions.map(q => `
+                            <li class="flex items-start">
+                                <span class="text-yellow-600 mr-2">•</span>
+                                <div>
+                                    <strong>${q.question_text}</strong>
+                                    ${q.required ? '<span class="text-red-600 text-sm ml-2">(Required)</span>' : ''}
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            }
+
+            // Citations
+            if (result.citations && result.citations.length > 0) {
+                document.getElementById('citationsCard').style.display = 'block';
+                document.getElementById('citationsContent').innerHTML = `
+                    <ul class="space-y-1">
+                        ${result.citations.map(citation => `
+                            <li class="text-sm text-gray-600">
+                                <span class="font-mono bg-gray-100 px-2 py-1 rounded">${citation}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            }
+
+            // Run Details
+            document.getElementById('runDetails').innerHTML = `
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-600">Run ID:</span>
+                        <p class="font-mono">${result.run_id}</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Status:</span>
+                        <p class="font-medium">${result.status}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('result').classList.add('show');
+            
+            // Reload recent runs
+            loadRecentRuns();
+        }
+
+        async function loadRecentRuns() {
+            try {
+                const response = await fetch(`${API_BASE}/runs?limit=5`);
+                const data = await response.json();
+                
+                const recentRunsDiv = document.getElementById('recentRuns');
+                if (data.runs && data.runs.length > 0) {
+                    recentRunsDiv.innerHTML = data.runs.map(run => `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                            <div>
+                                <span class="font-mono text-sm">${run.run_id.substring(0, 8)}...</span>
+                                <span class="text-gray-600 text-sm ml-2">${new Date(run.created_at).toLocaleString()}</span>
+                            </div>
+                            <div>
+                                <span class="px-2 py-1 text-xs rounded ${
+                                    run.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                    run.status === 'failed' ? 'bg-red-100 text-red-800' : 
+                                    'bg-gray-100 text-gray-800'
+                                }">${run.status}</span>
+                                <button onclick="viewRun('${run.run_id}')" class="ml-2 text-blue-600 hover:text-blue-800 text-sm">
+                                    View
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    recentRunsDiv.innerHTML = '<p class="text-gray-500">No recent runs found</p>';
+                }
+            } catch (error) {
+                console.error('Error loading recent runs:', error);
+            }
+        }
+
+        async function viewRun(runId) {
+            try {
+                const response = await fetch(`${API_BASE}/runs/${runId}/audit`);
+                const data = await response.json();
+                
+                alert(`Run ${runId} audit data:\n\n${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                alert(`Error loading run details: ${error.message}`);
+            }
+        }
+
+        // Load recent runs on page load
+        loadRecentRuns();
+    </script>
+</body>
+</html>
