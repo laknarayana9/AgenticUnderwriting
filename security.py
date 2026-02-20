@@ -2,7 +2,10 @@
 Security middleware and authentication for production deployment.
 """
 
-import jwt
+try:
+    import jwt
+except ImportError:
+    jwt = None
 import bcrypt
 import secrets
 from datetime import datetime, timedelta

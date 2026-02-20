@@ -7,9 +7,14 @@ import json
 import asyncio
 import smtplib
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
+from typing import Dict, List, Any, Optional, Callable
+from fastapi import Request
+try:
+    from email.mime.text import MimeText
+    from email.mime.multipart import MimeMultipart
+except ImportError:
+    MimeText = None
+    MimeMultipart = None
 import prometheus_client
 from prometheus_client import Counter, Histogram, Gauge, generate_latest
 import psutil
@@ -17,13 +22,23 @@ import sys
 import traceback
 
 
-# Prometheus metrics
-REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
-REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
-ACTIVE_WORKFLOWS = Gauge('active_workflows', 'Number of active workflows')
-DATABASE_CONNECTIONS = Gauge('database_connections', 'Active database connections')
-CACHE_HIT_RATE = Gauge('cache_hit_rate', 'Cache hit rate percentage')
-ERROR_COUNT = Counter('errors_total', 'Total errors', ['error_type', 'component'])
+# Prometheus metrics - avoid duplication
+try:
+    REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint', 'status'])
+    REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
+    ACTIVE_WORKFLOWS = Gauge('active_workflows', 'Number of active workflows')
+    DATABASE_CONNECTIONS = Gauge('database_connections', 'Active database connections')
+    CACHE_HIT_RATE = Gauge('cache_hit_rate', 'Cache hit rate percentage')
+    ERROR_COUNT = Counter('errors_total', 'Total errors', ['error_type', 'component'])
+except Exception as e:
+    print(f"Warning: Prometheus metrics initialization failed: {e}")
+    # Fallback dummy metrics
+    REQUEST_COUNT = None
+    REQUEST_DURATION = None
+    ACTIVE_WORKFLOWS = None
+    DATABASE_CONNECTIONS = None
+    CACHE_HIT_RATE = None
+    ERROR_COUNT = None
 
 
 class StructuredLogger:
@@ -447,50 +462,64 @@ async def monitoring_middleware(request, call_next):
     try:
         response = await call_next(request)
         
-        # Record metrics
-        REQUEST_COUNT.labels(
-            method=request.method,
-            endpoint=request.url.path,
-            status=response.status_code
-        ).inc()
+        # Record metrics only if available
+        if REQUEST_COUNT is not None:
+            REQUEST_COUNT.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=response.status_code
+            ).inc()
+            
+            duration = (datetime.now() - start_time).total_seconds()
+            if REQUEST_DURATION is not None:
+                REQUEST_DURATION.observe(duration)
         
-        duration = (datetime.now() - start_time).total_seconds()
-        REQUEST_DURATION.observe(duration)
-        
-        # Log request
-        logger.info("HTTP request", 
-                   method=request.method,
-                   path=request.url.path,
-                   status=response.status_code,
-                   duration=duration)
+        # Log request only if logger is available
+        try:
+            logger.info("HTTP request", 
+                       method=request.method,
+                       path=request.url.path,
+                       status=response.status_code,
+                       duration=duration)
+        except:
+            pass  # Skip logging if logger not available
         
         return response
         
     except Exception as e:
-        # Record error
-        ERROR_COUNT.labels(error_type=type(e).__name__, component="api").inc()
+        # Record error only if metrics available
+        if ERROR_COUNT is not None:
+            ERROR_COUNT.labels(error_type=type(e).__name__, component="api").inc()
         
-        logger.error("Request error", 
-                    method=request.method,
-                    path=request.url.path,
-                    error=str(e),
-                    traceback=traceback.format_exc())
-        
-        duration = (datetime.now() - start_time).total_seconds()
-        REQUEST_DURATION.observe(duration)
+        try:
+            duration = (datetime.now() - start_time).total_seconds()
+            logger.error("Request error", 
+                        method=request.method,
+                        path=request.url.path,
+                        error=str(e),
+                        traceback=str(e.__traceback__))
+            if REQUEST_DURATION is not None:
+                REQUEST_DURATION.observe(duration)
+        except:
+            pass  # Skip logging if logger not available
         
         raise
 
 
 # Prometheus metrics endpoint
-async def metrics_endpoint():
+def metrics_endpoint():
     """Prometheus metrics endpoint."""
+    if REQUEST_COUNT is None:
+        return {"error": "Prometheus metrics not available"}
     return generate_latest()
 
 
 # Health check endpoint
-async def health_endpoint():
+async def health_endpoint(request: Request = None):
     """Health check endpoint."""
+    if health_checker is None:
+        return {"status": "degraded", "message": "Health checker not initialized"}
+    
     health_status = await health_checker.run_all_checks()
     
     if health_status["status"] == "healthy":
