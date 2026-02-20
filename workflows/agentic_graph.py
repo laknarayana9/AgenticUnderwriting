@@ -103,9 +103,9 @@ def create_agentic_underwriting_graph() -> StateGraph:
 def run_agentic_underwriting_workflow(submission_data: Dict[str, Any], 
                                     additional_answers: Dict[str, Any] = None) -> WorkflowState:
     """
-    Run the agentic underwriting workflow with the given submission data.
+    Run agentic underwriting workflow with given submission data.
     """
-    # Create the graph
+    # Create graph
     graph = create_agentic_underwriting_graph()
     compiled_graph = graph.compile()
     
@@ -119,7 +119,27 @@ def run_agentic_underwriting_workflow(submission_data: Dict[str, Any],
         additional_answers=additional_answers or {}
     )
     
-    # Run the workflow
-    result = compiled_graph.invoke(initial_state)
+    # Run workflow
+    result_dict = compiled_graph.invoke(initial_state)
+    
+    # Convert datetime objects to strings for JSON serialization
+    def serialize_datetime(obj):
+        if hasattr(obj, 'isoformat'):
+            return obj.isoformat()
+        return obj
+    
+    # Recursively serialize datetime objects
+    def serialize_dict(d):
+        if isinstance(d, dict):
+            return {k: serialize_dict(v) for k, v in d.items()}
+        elif isinstance(d, list):
+            return [serialize_dict(item) for item in d]
+        else:
+            return serialize_datetime(d)
+    
+    result_dict_serialized = serialize_dict(result_dict)
+    
+    # Convert result back to WorkflowState
+    result = WorkflowState(**result_dict_serialized)
     
     return result

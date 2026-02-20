@@ -72,31 +72,31 @@ def store_run_record(workflow_state: WorkflowState, status: str = "completed", e
     node_outputs = {
         "validation": {
             "missing_info": workflow_state.missing_info,
-            "tool_calls": [call.dict() for call in workflow_state.tool_calls if call.tool_name == "validate_submission"]
+            "tool_calls": [call.model_dump() for call in workflow_state.tool_calls if call.tool_name == "validate_submission"]
         },
         "enrichment": {
-            "normalized_address": workflow_state.enrichment_result.normalized_address.dict() if workflow_state.enrichment_result else None,
-            "hazard_scores": workflow_state.enrichment_result.hazard_scores.dict() if workflow_state.enrichment_result else None,
-            "tool_calls": [call.dict() for call in workflow_state.tool_calls if call.tool_name in ["address_normalize", "hazard_score"]]
+            "normalized_address": workflow_state.enrichment_result.normalized_address.model_dump() if workflow_state.enrichment_result else None,
+            "hazard_scores": workflow_state.enrichment_result.hazard_scores.model_dump() if workflow_state.enrichment_result else None,
+            "tool_calls": [call.model_dump() for call in workflow_state.tool_calls if call.tool_name in ["address_normalize", "hazard_score"]]
         },
         "retrieval": {
             "guidelines_count": len(workflow_state.retrieved_guidelines),
             "citations": [chunk.doc_id for chunk in workflow_state.retrieved_guidelines],
-            "tool_calls": [call.dict() for call in workflow_state.tool_calls if call.tool_name == "rag_retrieval"]
+            "tool_calls": [call.model_dump() for call in workflow_state.tool_calls if call.tool_name == "rag_retrieval"]
         },
         "assessment": {
             "eligibility_score": workflow_state.uw_assessment.eligibility_score if workflow_state.uw_assessment else None,
-            "triggers": [t.dict() for t in workflow_state.uw_assessment.triggers] if workflow_state.uw_assessment else [],
-            "tool_calls": [call.dict() for call in workflow_state.tool_calls if call.tool_name == "underwriting_assessment"]
+            "triggers": [t.model_dump() for t in workflow_state.uw_assessment.triggers] if workflow_state.uw_assessment else [],
+            "tool_calls": [call.model_dump() for call in workflow_state.tool_calls if call.tool_name == "underwriting_assessment"]
         },
         "rating": {
-            "premium": workflow_state.premium_breakdown.dict() if workflow_state.premium_breakdown else None,
-            "tool_calls": [call.dict() for call in workflow_state.tool_calls if call.tool_name == "rating_calculation"]
+            "premium": workflow_state.premium_breakdown.model_dump() if workflow_state.premium_breakdown else None,
+            "tool_calls": [call.model_dump() for call in workflow_state.tool_calls if call.tool_name == "rating_calculation"]
         },
         "decision": {
             "decision": workflow_state.decision.decision if workflow_state.decision else None,
             "rationale": workflow_state.decision.rationale if workflow_state.decision else None,
-            "tool_calls": [call.dict() for call in workflow_state.tool_calls if call.tool_name == "decision_making"]
+            "tool_calls": [call.model_dump() for call in workflow_state.tool_calls if call.tool_name == "decision_making"]
         }
     }
     
@@ -123,20 +123,20 @@ async def run_quote_processing(request: QuoteRunRequest):
         # Choose workflow based on agentic flag
         if request.use_agentic:
             workflow_state = run_agentic_underwriting_workflow(
-                request.submission.dict(), 
+                request.submission.model_dump(), 
                 request.additional_answers
             )
         else:
-            workflow_state = run_underwriting_workflow(request.submission.dict())
+            workflow_state = run_underwriting_workflow(request.submission.model_dump())
         
         # Store the run record
         run_id = store_run_record(workflow_state)
         
         # Prepare response
-        decision_dict = workflow_state.decision.dict() if workflow_state.decision else None
-        premium_dict = workflow_state.premium_breakdown.dict() if workflow_state.premium_breakdown else None
+        decision_dict = workflow_state.decision.model_dump() if workflow_state.decision else None
+        premium_dict = workflow_state.premium_breakdown.model_dump() if workflow_state.premium_breakdown else None
         citations = workflow_state.uw_assessment.citations if workflow_state.uw_assessment else []
-        required_questions = [q.dict() for q in workflow_state.decision.required_questions] if workflow_state.decision and workflow_state.decision.required_questions else []
+        required_questions = [q.model_dump() for q in workflow_state.decision.required_questions] if workflow_state.decision and workflow_state.decision.required_questions else []
         
         # Determine message based on decision
         if workflow_state.decision:
@@ -187,7 +187,7 @@ async def get_run_status(run_id: str):
         status=run_record.status,
         created_at=run_record.created_at,
         updated_at=run_record.updated_at,
-        workflow_state=run_record.workflow_state.dict(),
+        workflow_state=run_record.workflow_state.model_dump(),
         error_message=run_record.error_message
     )
 
@@ -220,9 +220,9 @@ async def get_run_audit(run_id: str):
         "status": run_record.status,
         "created_at": run_record.created_at,
         "updated_at": run_record.updated_at,
-        "workflow_state": run_record.workflow_state.dict(),
+        "workflow_state": run_record.workflow_state.model_dump(),
         "node_outputs": run_record.node_outputs,
-        "tool_calls": [call.dict() for call in run_record.workflow_state.tool_calls],
+        "tool_calls": [call.model_dump() for call in run_record.workflow_state.tool_calls],
         "error_message": run_record.error_message
     }
 

@@ -6,6 +6,13 @@ from pathlib import Path
 from models.schemas import RunRecord, WorkflowState
 
 
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+
 class UnderwritingDB:
     """
     SQLite database for storing underwriting run records.
@@ -59,8 +66,8 @@ class UnderwritingDB:
                 record.created_at.isoformat(),
                 record.updated_at.isoformat(),
                 record.status,
-                record.workflow_state.json(),
-                json.dumps(record.node_outputs),
+                record.workflow_state.model_dump_json(),
+                json.dumps(record.node_outputs, cls=DateTimeEncoder),
                 record.error_message
             ))
         
@@ -82,7 +89,7 @@ class UnderwritingDB:
                 return None
             
             # Parse the data
-            workflow_state = WorkflowState.parse_raw(row['workflow_state'])
+            workflow_state = WorkflowState.model_validate_json(row['workflow_state'])
             node_outputs = json.loads(row['node_outputs']) if row['node_outputs'] else {}
             
             return RunRecord(

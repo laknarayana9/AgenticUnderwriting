@@ -80,7 +80,7 @@ class AddressNormalizeTool:
         """
         normalized = self.normalize(submission)
         return {
-            "normalized_address": normalized.dict(),
+            "normalized_address": normalized.model_dump(),
             "confidence": 0.85,  # Mock confidence score
             "warnings": [] if normalized.city else ["City could not be determined"]
         }

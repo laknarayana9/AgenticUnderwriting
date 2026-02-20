@@ -89,7 +89,7 @@ class HazardScoreTool:
             risk_level = "LOW"
         
         return {
-            "hazard_scores": scores.dict(),
+            "hazard_scores": scores.model_dump(),
             "overall_risk_level": risk_level,
             "primary_hazard": max([
                 ("wildfire", scores.wildfire_risk),

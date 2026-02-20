@@ -111,7 +111,7 @@ class RatingTool:
             premium_tier = "LOW"
         
         return {
-            "premium_breakdown": premium.dict(),
+            "premium_breakdown": premium.model_dump(),
             "premium_tier": premium_tier,
             "annual_premium": premium.total_premium,
             "monthly_premium": round(premium.total_premium / 12, 2),

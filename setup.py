@@ -83,7 +83,7 @@ def main():
         )
         
         # Run workflow
-        result = run_underwriting_workflow(test_submission.dict())
+        result = run_underwriting_workflow(test_submission.model_dump())
         print("✅ Workflow test completed successfully")
         print(f"📊 Decision: {result.decision.decision if result.decision else 'No decision'}")
         

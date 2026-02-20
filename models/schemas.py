@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -96,6 +96,10 @@ class Decision(BaseModel):
 
 
 class ToolCall(BaseModel):
+    model_config = ConfigDict(json_encoders={
+        datetime: lambda v: v.isoformat()
+    })
+    
     tool_name: str
     input_data: Dict[str, Any]
     output_data: Dict[str, Any]
@@ -104,6 +108,10 @@ class ToolCall(BaseModel):
 
 
 class WorkflowState(BaseModel):
+    model_config = ConfigDict(json_encoders={
+        datetime: lambda v: v.isoformat()
+    })
+    
     quote_submission: QuoteSubmission
     enrichment_result: Optional[EnrichmentResult] = None
     retrieved_guidelines: List[RetrievalChunk] = Field(default_factory=list)
@@ -118,6 +126,10 @@ class WorkflowState(BaseModel):
 
 
 class RunRecord(BaseModel):
+    model_config = ConfigDict(json_encoders={
+        datetime: lambda v: v.isoformat()
+    })
+    
     run_id: str
     created_at: datetime
     updated_at: datetime

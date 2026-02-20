@@ -54,9 +54,9 @@ def create_underwriting_graph() -> StateGraph:
 
 def run_underwriting_workflow(submission_data: Dict[str, Any]) -> WorkflowState:
     """
-    Run the underwriting workflow with the given submission data.
+    Run the underwriting workflow with given submission data.
     """
-    # Create the graph
+    # Create graph
     graph = create_underwriting_graph()
     compiled_graph = graph.compile()
     
@@ -69,7 +69,10 @@ def run_underwriting_workflow(submission_data: Dict[str, Any]) -> WorkflowState:
         current_node="start"
     )
     
-    # Run the workflow
-    result = compiled_graph.invoke(initial_state)
+    # Run workflow
+    result_dict = compiled_graph.invoke(initial_state)
+    
+    # Convert result back to WorkflowState
+    result = WorkflowState(**result_dict)
     
     return result

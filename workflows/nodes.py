@@ -25,11 +25,17 @@ class UnderwritingNodes:
         # Initialize RAG with documents
         self.rag_engine.ingest_documents()
     
-    def validate_submission(self, state: WorkflowState) -> WorkflowState:
+    def validate_submission(self, state) -> dict:
         """
         Validate the quote submission for completeness and basic requirements.
         """
-        submission = state.quote_submission
+        # Handle both dict and WorkflowState inputs
+        if isinstance(state, dict):
+            from models.schemas import QuoteSubmission
+            submission = QuoteSubmission(**state['quote_submission'])
+        else:
+            submission = state.quote_submission
+            
         missing_info = []
         
         # Check required fields
@@ -55,17 +61,25 @@ class UnderwritingNodes:
         if submission.construction_year and submission.construction_year < 1800:
             missing_info.append("construction_year seems too old")
         
-        state.missing_info = missing_info
-        state.current_node = "validate"
-        
         # Log tool call
         tool_call = ToolCall(
             tool_name="validate_submission",
-            input_data={"submission": submission.dict()},
+            input_data={"submission": submission.model_dump()},
             output_data={"missing_info": missing_info, "valid": len(missing_info) == 0},
             timestamp=datetime.now()
         )
-        state.tool_calls.append(tool_call)
+        
+        # Return updated state as dict
+        if isinstance(state, dict):
+            state['missing_info'] = missing_info
+            state['current_node'] = "validate"
+            if 'tool_calls' not in state:
+                state['tool_calls'] = []
+            state['tool_calls'].append(tool_call)
+        else:
+            state.missing_info = missing_info
+            state.current_node = "validate"
+            state.tool_calls.append(tool_call)
         
         return state
     
@@ -171,7 +185,7 @@ class UnderwritingNodes:
         tool_call = ToolCall(
             tool_name="rag_retrieval",
             input_data={"query": query, "n_results": 5},
-            output_data={"retrieved_chunks": [chunk.dict() for chunk in retrieved_chunks]},
+            output_data={"retrieved_chunks": [chunk.model_dump() for chunk in retrieved_chunks]},
             timestamp=datetime.now()
         )
         state.tool_calls.append(tool_call)
@@ -297,11 +311,11 @@ class UnderwritingNodes:
         tool_call = ToolCall(
             tool_name="underwriting_assessment",
             input_data={
-                "submission": submission.dict(),
-                "enrichment": enrichment.dict() if enrichment else {},
+                "submission": submission.model_dump(),
+                "enrichment": enrichment.model_dump() if enrichment else {},
                 "guidelines_count": len(guidelines)
             },
-            output_data={"assessment": assessment.dict()},
+            output_data={"assessment": assessment.model_dump()},
             timestamp=datetime.now()
         )
         state.tool_calls.append(tool_call)
@@ -331,7 +345,7 @@ class UnderwritingNodes:
             tool_call = ToolCall(
                 tool_name="citation_guardrail",
                 input_data={"assessment_citations": assessment.citations if assessment else []},
-                output_data={"guardrail_triggered": True, "forced_decision": decision.dict()},
+                output_data={"guardrail_triggered": True, "forced_decision": decision.model_dump()},
                 timestamp=datetime.now()
             )
             state.tool_calls.append(tool_call)
@@ -352,7 +366,7 @@ class UnderwritingNodes:
         rating_data = {
             "coverage_amount": submission.coverage_amount,
             "property_type": submission.property_type,
-            "hazard_scores": enrichment.hazard_scores.dict() if enrichment else {},
+            "hazard_scores": enrichment.hazard_scores.model_dump() if enrichment else {},
             "construction_year": submission.construction_year
         }
         
@@ -382,7 +396,7 @@ class UnderwritingNodes:
         # Process additional answers if provided
         if state.additional_answers:
             # Update submission with additional answers
-            submission_dict = state.quote_submission.dict()
+            submission_dict = state.quote_submission.model_dump()
             
             for field, value in state.additional_answers.items():
                 if hasattr(state.quote_submission, field):
@@ -395,7 +409,7 @@ class UnderwritingNodes:
             tool_call = ToolCall(
                 tool_name="process_additional_answers",
                 input_data={"additional_answers": state.additional_answers},
-                output_data={"updated_submission": state.quote_submission.dict()},
+                output_data={"updated_submission": state.quote_submission.model_dump()},
                 timestamp=datetime.now()
             )
             state.tool_calls.append(tool_call)
@@ -428,7 +442,7 @@ class UnderwritingNodes:
             tool_call = ToolCall(
                 tool_name="generate_missing_info_questions",
                 input_data={"missing_info": state.missing_info},
-                output_data={"questions": [q.dict() for q in missing_questions]},
+                output_data={"questions": [q.model_dump() for q in missing_questions]},
                 timestamp=datetime.now()
             )
             state.tool_calls.append(tool_call)
@@ -491,10 +505,10 @@ class UnderwritingNodes:
             tool_name="decision_making",
             input_data={
                 "eligibility_score": assessment.eligibility_score,
-                "triggers": [t.dict() for t in assessment.triggers],
+                "triggers": [t.model_dump() for t in assessment.triggers],
                 "missing_info": missing_info
             },
-            output_data={"decision": decision.dict()},
+            output_data={"decision": decision.model_dump()},
             timestamp=datetime.now()
         )
         state.tool_calls.append(tool_call)
