@@ -67,7 +67,11 @@ class Settings(BaseSettings):
         description="Port to run the server on"
     )
     
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": ".env", 
+        "env_file_encoding": "utf-8",
+        "extra": "allow"  # Allow extra fields from environment
+    }
 
 
 # Development vs Production configurations
@@ -77,6 +81,8 @@ class DevelopmentSettings(Settings):
     cors_origins: List[str] = ["*"]
     cors_allow_methods: List[str] = ["*"]
     cors_allow_headers: List[str] = ["*"]
+    debug: bool = True
+    log_level: str = "debug"
 
 
 class ProductionSettings(Settings):
@@ -90,13 +96,23 @@ class ProductionSettings(Settings):
     ]
     cors_allow_methods: List[str] = ["GET", "POST", "PUT", "DELETE"]
     cors_allow_headers: List[str] = ["Content-Type", "Authorization", "X-API-Key"]
+    debug: bool = False
+    log_level: str = "info"
 
 
 def get_settings() -> Settings:
     """Get appropriate settings based on environment."""
     import os
+    from pathlib import Path
     
+    # Try to get environment from ENVIRONMENT variable or default to development
     env = os.getenv("ENVIRONMENT", "development").lower()
+    
+    # Load environment-specific file if it exists
+    env_file = f".env.{env}"
+    if Path(env_file).exists():
+        print(f"Loading {env_file} configuration...")
+        os.environ.setdefault("ENV_FILE", env_file)
     
     if env == "production":
         return ProductionSettings()
