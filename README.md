@@ -4,7 +4,7 @@ A 2-day working version of an agentic insurance quote processing and underwritin
 
 ## ✅ Features Implemented
 
-### Day 1 - Core Infrastructure
+### Core Infrastructure
 - **Schema Definitions**: Complete data models for quotes, assessments, and decisions
 - **Tool Stubs**: Address normalization, hazard scoring, and rating tools
 - **RAG System**: Document ingestion and retrieval over underwriting guidelines
@@ -12,7 +12,7 @@ A 2-day working version of an agentic insurance quote processing and underwritin
 - **Storage**: SQLite database for run records and audit trails
 - **API Endpoints**: RESTful API for quote processing
 
-### Day 2 - Agentic Enhancements ✅
+### Agentic Enhancements ✅
 - **Missing-info Loop**: Agentic behavior for handling incomplete submissions
 - **Strict Citation Guardrail**: Forces REFER when assessment lacks proper citations
 - **Simple UI**: Demo interface for testing and visualization

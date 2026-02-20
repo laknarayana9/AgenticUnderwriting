@@ -137,3 +137,34 @@ class RunRecord(BaseModel):
     workflow_state: WorkflowState
     node_outputs: Dict[str, Any] = Field(default_factory=dict)
     error_message: Optional[str] = None
+
+
+# API Response Models
+class QuoteRunRequest(BaseModel):
+    submission: QuoteSubmission
+    use_agentic: bool = False  # Enable agentic behavior
+    additional_answers: Optional[Dict[str, Any]] = None  # Answers to missing info questions
+
+
+class QuoteRunResponse(BaseModel):
+    run_id: str
+    status: str
+    decision: Optional[Dict[str, Any]] = None
+    premium: Optional[Dict[str, Any]] = None
+    citations: Optional[list] = None
+    required_questions: Optional[list] = None
+    message: str
+
+
+class RunStatusResponse(BaseModel):
+    run_id: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    workflow_state: Optional[Dict[str, Any]] = None
+    error_message: Optional[str] = None
+
+
+class RunListResponse(BaseModel):
+    runs: list
+    total_count: int

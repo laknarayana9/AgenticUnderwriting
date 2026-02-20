@@ -1,19 +1,20 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import uuid
 from datetime import datetime
 
 from models.schemas import (
     QuoteSubmission, RunRecord, RunStatusResponse, 
-    QuoteRunRequest, QuoteRunResponse, RunListResponse
+    QuoteRunRequest, QuoteRunResponse, RunListResponse,
+    WorkflowState
 )
 from workflows.graph import run_underwriting_workflow
 from workflows.agentic_graph import run_agentic_underwriting_workflow
 from storage.database import db
 from config import settings
+from metrics_dashboard import create_dashboard_routes
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -34,36 +35,8 @@ app.add_middleware(
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
-# Request/Response models
-class QuoteRunRequest(BaseModel):
-    submission: QuoteSubmission
-    use_agentic: bool = False  # Enable agentic behavior
-    additional_answers: Optional[Dict[str, Any]] = None  # Answers to missing info questions
-
-
-class QuoteRunResponse(BaseModel):
-    run_id: str
-    status: str
-    decision: Optional[Dict[str, Any]] = None
-    premium: Optional[Dict[str, Any]] = None
-    citations: Optional[list] = None
-    required_questions: Optional[list] = None
-    message: str
-
-
-class RunStatusResponse(BaseModel):
-    run_id: str
-    status: str
-    created_at: datetime
-    updated_at: datetime
-    workflow_state: Optional[Dict[str, Any]] = None
-    error_message: Optional[str] = None
-
-
-class RunListResponse(BaseModel):
-    runs: list
-    total_count: int
+# Add dashboard routes
+create_dashboard_routes(app)
 
 
 def store_run_record(workflow_state: WorkflowState, status: str = "completed", error_message: Optional[str] = None):
