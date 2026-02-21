@@ -3,6 +3,7 @@ Minimal application for testing without complex middleware.
 """
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from config import settings
 
 
@@ -16,12 +17,21 @@ def create_minimal_app() -> FastAPI:
         version=settings.version
     )
     
+    # Mount static files
+    import os
+    if os.path.exists("static"):
+        app.mount("/static", StaticFiles(directory="static"), name="static")
+    
     @app.get("/health")
     async def health():
         return {"status": "healthy", "message": "Minimal app working"}
     
     @app.get("/")
     async def root():
-        return {"message": "Agentic Quote-to-Underwrite API", "version": "1.0.0"}
+        return {
+            "message": "Agentic Quote-to-Underwrite API", 
+            "version": "1.0.0",
+            "test_interface": "/static/test.html"
+        }
     
     return app

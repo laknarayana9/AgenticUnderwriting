@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Quote-to-Underwrite - Test Interface</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            border-left: 4px solid #28a745;
+        }
+        .error {
+            border-left: 4px solid #dc3545;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .status.healthy {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.unhealthy {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Agentic Quote-to-Underwrite</h1>
+        
+        <div id="status" class="status">
+            Checking system status...
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 System Health Checks</h2>
+            <button class="test-button" onclick="testHealth()">Test Health</button>
+            <button class="test-button" onclick="testMetrics()">Test Metrics</button>
+            <button class="test-button" onclick="testRoot()">Test Root</button>
+            <div id="health-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Quote Submission Test</h2>
+            <form id="quote-form">
+                <div class="form-group">
+                    <label for="name">Applicant Name:</label>
+                    <input type="text" id="name" value="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" value="john.doe@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="address">Property Address:</label>
+                    <input type="text" id="address" value="123 Main St, Irvine, CA 92620" required>
+                </div>
+                <div class="form-group">
+                    <label for="property-type">Property Type:</label>
+                    <select id="property-type">
+                        <option value="single_family">Single Family</option>
+                        <option value="condo">Condo</option>
+                        <option value="townhouse">Townhouse</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="coverage">Coverage Amount:</label>
+                    <input type="number" id="coverage" value="250000" required>
+                </div>
+                <div class="form-group">
+                    <label for="year">Construction Year:</label>
+                    <input type="number" id="year" value="2020" required>
+                </div>
+                <div class="form-group">
+                    <label for="sqft">Square Footage:</label>
+                    <input type="number" id="sqft" value="2000" required>
+                </div>
+                <div class="form-group">
+                    <label for="roof">Roof Type:</label>
+                    <select id="roof">
+                        <option value="tile">Tile</option>
+                        <option value="shingle">Shingle</option>
+                        <option value="metal">Metal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="foundation">Foundation Type:</label>
+                    <select id="foundation">
+                        <option value="concrete">Concrete</option>
+                        <option value="slab">Slab</option>
+                        <option value="crawlspace">Crawl Space</option>
+                    </select>
+                </div>
+                <button type="button" class="test-button" onclick="submitQuote()">Submit Quote</button>
+                <button type="button" class="test-button" onclick="submitAgenticQuote()">Submit Agentic Quote</button>
+            </form>
+            <div id="quote-result" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Run Management</h2>
+            <button class="test-button" onclick="listRuns()">List Runs</button>
+            <input type="text" id="run-id" placeholder="Enter Run ID">
+            <button class="test-button" onclick="getRunStatus()">Get Run Status</button>
+            <button class="test-button" onclick="getRunAudit()">Get Run Audit</button>
+            <div id="run-result" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+
+        // Check status on load
+        window.onload = function() {
+            testHealth();
+        };
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { success: true, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        function showResult(elementId, result, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+            element.textContent = JSON.stringify(result, null, 2);
+        }
+
+        function updateStatus(isHealthy, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${isHealthy ? 'healthy' : 'unhealthy'}`;
+            status.textContent = message;
+        }
+
+        async function testHealth() {
+            const result = await makeRequest(`${API_BASE}/health`);
+            if (result.success && result.data.status === 'healthy') {
+                updateStatus(true, '✅ System is healthy');
+                showResult('health-result', result.data, true);
+            } else {
+                updateStatus(false, '❌ System is unhealthy');
+                showResult('health-result', result, false);
+            }
+        }
+
+        async function testMetrics() {
+            const result = await makeRequest(`${API_BASE}/metrics`);
+            if (result.success) {
+                showResult('health-result', result.data, true);
+            } else {
+                showResult('health-result', result.error, false);
+            }
+        }
+
+        async function testRoot() {
+            const result = await makeRequest(`${API_BASE}/`);
+            if (result.success) {
+                showResult('health-result', result.data, true);
+            } else {
+                showResult('health-result', result.error, false);
+            }
+        }
+
+        async function submitQuote() {
+            const quoteData = {
+                quote_id: `test_${Date.now()}`,
+                submission: {
+                    applicant_name: document.getElementById('name').value,
+                    applicant_email: document.getElementById('email').value,
+                    address: document.getElementById('address').value,
+                    property_type: document.getElementById('property-type').value,
+                    coverage_amount: parseInt(document.getElementById('coverage').value),
+                    construction_year: parseInt(document.getElementById('year').value),
+                    square_footage: parseInt(document.getElementById('sqft').value),
+                    roof_type: document.getElementById('roof').value,
+                    foundation_type: document.getElementById('foundation').value
+                },
+                use_agentic: false,
+                additional_answers: {}
+            };
+
+            const result = await makeRequest(`${API_BASE}/quote/run`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(quoteData)
+            });
+
+            if (result.success) {
+                showResult('quote-result', result.data, true);
+            } else {
+                showResult('quote-result', result.error, false);
+            }
+        }
+
+        async function submitAgenticQuote() {
+            const quoteData = {
+                quote_id: `agentic_${Date.now()}`,
+                submission: {
+                    applicant_name: document.getElementById('name').value,
+                    applicant_email: document.getElementById('email').value,
+                    address: document.getElementById('address').value,
+                    property_type: document.getElementById('property-type').value,
+                    coverage_amount: parseInt(document.getElementById('coverage').value),
+                    construction_year: parseInt(document.getElementById('year').value),
+                    square_footage: parseInt(document.getElementById('sqft').value),
+                    roof_type: document.getElementById('roof').value,
+                    foundation_type: document.getElementById('foundation').value
+                },
+                use_agentic: true,
+                additional_answers: {}
+            };
+
+            const result = await makeRequest(`${API_BASE}/quote/run`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(quoteData)
+            });
+
+            if (result.success) {
+                showResult('quote-result', result.data, true);
+            } else {
+                showResult('quote-result', result.error, false);
+            }
+        }
+
+        async function listRuns() {
+            const result = await makeRequest(`${API_BASE}/runs`);
+            if (result.success) {
+                showResult('run-result', result.data, true);
+            } else {
+                showResult('run-result', result.error, false);
+            }
+        }
+
+        async function getRunStatus() {
+            const runId = document.getElementById('run-id').value;
+            if (!runId) {
+                showResult('run-result', { error: 'Please enter a Run ID' }, false);
+                return;
+            }
+
+            const result = await makeRequest(`${API_BASE}/runs/${runId}`);
+            if (result.success) {
+                showResult('run-result', result.data, true);
+            } else {
+                showResult('run-result', result.error, false);
+            }
+        }
+
+        async function getRunAudit() {
+            const runId = document.getElementById('run-id').value;
+            if (!runId) {
+                showResult('run-result', { error: 'Please enter a Run ID' }, false);
+                return;
+            }
+
+            const result = await makeRequest(`${API_BASE}/runs/${runId}/audit`);
+            if (result.success) {
+                showResult('run-result', result.data, true);
+            } else {
+                showResult('run-result', result.error, false);
+            }
+        }
+    </script>
+</body>
+</html>
