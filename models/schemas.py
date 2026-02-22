@@ -168,3 +168,22 @@ class RunStatusResponse(BaseModel):
 class RunListResponse(BaseModel):
     runs: list
     total_count: int
+
+class HumanReviewRecord(BaseModel):
+    model_config = ConfigDict(json_encoders={
+        datetime: lambda v: v.isoformat()
+    })
+    
+    run_id: str
+    status: str  # e.g., "pending_review", "human_approved"
+    requires_human_review: bool = True
+    final_decision: Optional[str] = None  # e.g., "ACCEPT", "REJECT", "REFER"
+    reviewer: Optional[str] = None
+    review_timestamp: Optional[datetime] = None
+    approved_premium: Optional[float] = None
+    reviewer_notes: Optional[str] = None
+    review_priority: Optional[str] = None
+    assigned_reviewer: Optional[str] = None
+    estimated_review_time: Optional[str] = None
+    submission_timestamp: Optional[datetime] = None
+    review_deadline: Optional[datetime] = None

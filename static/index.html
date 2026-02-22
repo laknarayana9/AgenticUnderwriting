@@ -182,9 +182,42 @@
 
         <!-- Recent Runs -->
         <div class="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 class="text-lg font-semibold mb-3">Recent Runs</h3>
+            <h3 class="text-lg font-semibold mb-3">Quote Runs (Last 100)</h3>
             <div id="recentRuns" class="space-y-2">
                 <p class="text-gray-500">Loading recent runs...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quote Details Modal -->
+    <div id="quoteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Quote Details</h3>
+                    <button onclick="closeQuoteModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="quoteModalContent" class="space-y-4">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
+                
+                <!-- Human Review Actions -->
+                <div id="humanReviewActions" class="mt-6 pt-4 border-t border-gray-200 hidden">
+                    <h4 class="text-lg font-semibold mb-3 text-orange-800">Human Review Required</h4>
+                    <div class="flex space-x-3">
+                        <button onclick="checkReviewStatus()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Check Review Status
+                        </button>
+                        <button onclick="showApprovalForm()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                            Approve (Human Reviewer)
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -441,7 +474,7 @@
             document.getElementById('runDetails').innerHTML = `
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span class="text-gray-600">Run ID:</span>
+                        <span class="text-gray-600">Quote ID:</span>
                         <p class="font-mono">${result.run_id || 'Unknown'}</p>
                     </div>
                     <div>
@@ -485,7 +518,7 @@
 
             document.getElementById('result').classList.add('show');
             
-            // Store current run ID for human review workflow
+            // Store current quote ID for human review workflow
             currentRunId = result.run_id;
             
             // Reload recent runs
@@ -494,7 +527,7 @@
 
         async function loadRecentRuns() {
             try {
-                const response = await fetch(`${API_BASE}/runs?limit=5`);
+                const response = await fetch(`${API_BASE}/runs?limit=100`);
                 const data = await response.json();
                 
                 const recentRunsDiv = document.getElementById('recentRuns');
@@ -527,20 +560,133 @@
 
         async function viewRun(runId) {
             try {
+                console.log('Loading run details for:', runId);
                 const response = await fetch(`${API_BASE}/runs/${runId}/audit`);
-                const data = await response.json();
+                console.log('Response status:', response.status);
                 
-                alert(`Run ${runId} audit data:\n\n${JSON.stringify(data, null, 2)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received data:', data);
+                
+                // Validate data structure before displaying
+                if (!data) {
+                    throw new Error('No data received from server');
+                }
+                
+                displayQuoteModal(data, runId);
             } catch (error) {
+                console.error('Error loading run details:', error);
                 alert(`Error loading run details: ${error.message}`);
             }
+        }
+
+        function displayQuoteModal(data, runId) {
+            const modal = document.getElementById('quoteModal');
+            const content = document.getElementById('quoteModalContent');
+            const humanReviewActions = document.getElementById('humanReviewActions');
+            
+            console.log('Displaying modal with data:', data);
+            
+            // Safe access to nested properties
+            const runRecord = data.run_record || {};
+            const workflowState = data.workflow_state || {};
+            const submission = workflowState.submission || {};
+            const decision = workflowState.decision || {};
+            const premium = workflowState.premium || {};
+            const nodeOutputs = data.node_outputs || {};
+            const validation = nodeOutputs.validation || {};
+            
+            // Build detailed content with safe property access
+            let html = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Basic Information</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Quote ID:</strong> <span class="font-mono">${runId}</span></div>
+                            <div><strong>Status:</strong> <span class="px-2 py-1 rounded ${
+                                runRecord.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                                runRecord.status === 'failed' ? 'bg-red-100 text-red-800' : 
+                                'bg-gray-100 text-gray-800'
+                            }">${runRecord.status || 'Unknown'}</span></div>
+                            <div><strong>Created:</strong> ${runRecord.created_at ? new Date(runRecord.created_at).toLocaleString() : 'N/A'}</div>
+                            <div><strong>Updated:</strong> ${runRecord.updated_at ? new Date(runRecord.updated_at).toLocaleString() : 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Submission Details</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Applicant:</strong> ${submission.applicant_name || 'N/A'}</div>
+                            <div><strong>Address:</strong> ${submission.address || 'N/A'}</div>
+                            <div><strong>Property Type:</strong> ${submission.property_type || 'N/A'}</div>
+                            <div><strong>Coverage:</strong> $${submission.coverage_amount ? submission.coverage_amount.toLocaleString() : 'N/A'}</div>
+                            <div><strong>Construction Year:</strong> ${submission.construction_year || 'N/A'}</div>
+                            <div><strong>Square Footage:</strong> ${submission.square_footage || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold text-gray-700 mb-2">Underwriting Results</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2 text-sm">
+                            <div><strong>Decision:</strong> <span class="px-2 py-1 rounded ${
+                                decision.decision === 'ACCEPT' ? 'bg-green-100 text-green-800' : 
+                                decision.decision === 'REFER' ? 'bg-yellow-100 text-yellow-800' : 
+                                decision.decision === 'DECLINE' ? 'bg-red-100 text-red-800' : 
+                                'bg-gray-100 text-gray-800'
+                            }">${decision.decision || 'N/A'}</span></div>
+                            ${decision.rationale ? `
+                            <div><strong>Rationale:</strong> ${decision.rationale}</div>` : ''}
+                        </div>
+                        
+                        <div class="space-y-2 text-sm">
+                            ${premium.annual_premium ? `
+                            <div><strong>Annual Premium:</strong> $${premium.annual_premium.toLocaleString()}</div>
+                            <div><strong>Monthly Premium:</strong> $${premium.monthly_premium ? premium.monthly_premium.toLocaleString() : 'N/A'}</div>` : ''}
+                            ${workflowState.requires_human_review ? `
+                            <div><strong>Human Review:</strong> <span class="text-orange-600">Required</span></div>` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <h4 class="font-semibold text-gray-700 mb-2">Audit Information</h4>
+                    <div class="text-sm space-y-1">
+                        <div><strong>Tool Calls:</strong> ${validation.tool_calls ? validation.tool_calls.length : 0} calls made</div>
+                        <div><strong>Missing Info:</strong> ${workflowState.missing_info ? workflowState.missing_info.length : 0} items</div>
+                        ${runRecord.error_message ? `
+                        <div><strong>Error:</strong> <span class="text-red-600">${runRecord.error_message}</span></div>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = html;
+            
+            // Show human review actions if required
+            if (workflowState.requires_human_review) {
+                humanReviewActions.classList.remove('hidden');
+                currentRunId = runId;
+            } else {
+                humanReviewActions.classList.add('hidden');
+            }
+            
+            // Show modal
+            modal.classList.remove('hidden');
+        }
+
+        function closeQuoteModal() {
+            document.getElementById('quoteModal').classList.add('hidden');
         }
 
         let currentRunId = null;
 
         async function checkReviewStatus() {
             if (!currentRunId) {
-                alert('No run ID available. Please submit a quote first.');
+                alert('No quote ID available. Please submit a quote first.');
                 return;
             }
             
@@ -611,7 +757,7 @@
 
         function showApprovalForm() {
             if (!currentRunId) {
-                alert('No run ID available. Please submit a quote first.');
+                alert('No quote ID available. Please submit a quote first.');
                 return;
             }
             

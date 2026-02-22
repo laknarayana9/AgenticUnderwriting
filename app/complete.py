@@ -13,8 +13,11 @@ import json
 
 from config import settings
 
-# In-memory storage for human review data
-human_review_store = {}
+# Import database for persistent storage
+from storage.database import UnderwritingDB
+
+# Initialize database
+db = UnderwritingDB()
 
 # Import message queue (Redis-based)
 from app.redis_queue import redis_message_queue, MessagePriority, process_quote_async
@@ -272,21 +275,27 @@ def create_complete_app() -> FastAPI:
         Approve a referred quote after human review.
         """
         try:
-            # Store approval data
-            approval_record = {
-                "run_id": run_id,
-                "status": "human_approved",
-                "original_decision": "REFER",
-                "final_decision": approval_data.get("final_decision", "REFER"),
-                "reviewer_notes": approval_data.get("reviewer_notes", ""),
-                "approved_premium": approval_data.get("approved_premium", 0),
-                "reviewer": approval_data.get("reviewer_name", "Human Reviewer"),
-                "review_timestamp": datetime.now().isoformat(),
-                "submission_timestamp": datetime.now().isoformat()
-            }
+            # Store approval data in database
+            from models.schemas import HumanReviewRecord
             
-            # Store in memory for retrieval
-            human_review_store[run_id] = approval_record
+            approval_record = HumanReviewRecord(
+                run_id=run_id,
+                status="human_approved",
+                requires_human_review=False,
+                final_decision=approval_data.get("final_decision", "REFER"),
+                reviewer=approval_data.get("reviewer", "Human Reviewer"),
+                review_timestamp=datetime.now(),
+                approved_premium=float(approval_data.get("approved_premium", "0")),
+                reviewer_notes=approval_data.get("reviewer_notes", ""),
+                review_priority=approval_data.get("review_priority", "medium"),
+                assigned_reviewer=approval_data.get("assigned_reviewer", "underwriting_team"),
+                estimated_review_time="Completed",
+                submission_timestamp=datetime.now(),
+                review_deadline=datetime.now()
+            )
+            
+            # Save to database
+            db.save_human_review_record(approval_record)
             
             return approval_record
             
@@ -301,18 +310,24 @@ def create_complete_app() -> FastAPI:
         """
         Get review status for a referred quote.
         """
-        # Check if we have approval data for this run
-        if run_id in human_review_store:
-            approval_record = human_review_store[run_id]
+        # Check if we have approval data for this run in database
+        review_record = db.get_human_review_record(run_id)
+        
+        if review_record:
             return {
-                "run_id": run_id,
-                "status": approval_record["status"],
-                "requires_human_review": False,
-                "final_decision": approval_record["final_decision"],
-                "reviewer": approval_record["reviewer"],
-                "review_timestamp": approval_record["review_timestamp"],
-                "approved_premium": approval_record["approved_premium"],
-                "reviewer_notes": approval_record["reviewer_notes"]
+                "run_id": review_record.run_id,
+                "status": review_record.status,
+                "requires_human_review": review_record.requires_human_review,
+                "final_decision": review_record.final_decision,
+                "reviewer": review_record.reviewer,
+                "review_timestamp": review_record.review_timestamp.isoformat() if review_record.review_timestamp else None,
+                "approved_premium": review_record.approved_premium,
+                "reviewer_notes": review_record.reviewer_notes,
+                "review_priority": review_record.review_priority,
+                "assigned_reviewer": review_record.assigned_reviewer,
+                "estimated_review_time": review_record.estimated_review_time,
+                "submission_timestamp": review_record.submission_timestamp.isoformat() if review_record.submission_timestamp else None,
+                "review_deadline": review_record.review_deadline.isoformat() if review_record.review_deadline else None
             }
         else:
             # Return pending status for unapproved runs

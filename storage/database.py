@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
-from models.schemas import RunRecord, WorkflowState
+from models.schemas import RunRecord, WorkflowState, HumanReviewRecord
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -49,6 +49,32 @@ class UnderwritingDB:
             """)
             
             conn.execute("""
+                CREATE TABLE IF NOT EXISTS human_review_records (
+                    run_id TEXT PRIMARY KEY,
+                    status TEXT NOT NULL,
+                    requires_human_review BOOLEAN NOT NULL DEFAULT 1,
+                    final_decision TEXT,
+                    reviewer TEXT,
+                    review_timestamp TEXT,
+                    approved_premium REAL,
+                    reviewer_notes TEXT,
+                    review_priority TEXT,
+                    assigned_reviewer TEXT,
+                    estimated_review_time TEXT,
+                    submission_timestamp TEXT,
+                    review_deadline TEXT
+                )
+            """)
+            
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_review_run_id ON human_review_records(run_id)
+            """)
+            
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_review_status ON human_review_records(status)
+            """)
+            
+            conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_status ON run_records(status)
             """)
     
@@ -72,6 +98,67 @@ class UnderwritingDB:
             ))
         
         return record.run_id
+    
+    def save_human_review_record(self, record: HumanReviewRecord) -> str:
+        """
+        Save a human review record to database.
+        """
+        def safe_isoformat(dt):
+            return dt.isoformat() if dt else None
+        
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO human_review_records 
+                (run_id, status, requires_human_review, final_decision, reviewer, 
+                 review_timestamp, approved_premium, reviewer_notes, review_priority, 
+                 assigned_reviewer, estimated_review_time, submission_timestamp, review_deadline)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                record.run_id,
+                record.status,
+                record.requires_human_review,
+                record.final_decision,
+                record.reviewer,
+                safe_isoformat(record.review_timestamp),
+                record.approved_premium,
+                record.reviewer_notes,
+                record.review_priority,
+                record.assigned_reviewer,
+                record.estimated_review_time,
+                safe_isoformat(record.submission_timestamp),
+                safe_isoformat(record.review_deadline)
+            ))
+        
+        return record.run_id
+    
+    def get_human_review_record(self, run_id: str) -> Optional[HumanReviewRecord]:
+        """
+        Retrieve a human review record by ID.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute("""
+                SELECT * FROM human_review_records WHERE run_id = ?
+            """, (run_id,))
+            
+            row = cursor.fetchone()
+            if row:
+                return HumanReviewRecord(
+                    run_id=row["run_id"],
+                    status=row["status"],
+                    requires_human_review=bool(row["requires_human_review"]),
+                    final_decision=row["final_decision"],
+                    reviewer=row["reviewer"],
+                    review_timestamp=datetime.fromisoformat(row["review_timestamp"]) if row["review_timestamp"] else None,
+                    approved_premium=row["approved_premium"],
+                    reviewer_notes=row["reviewer_notes"],
+                    review_priority=row["review_priority"],
+                    assigned_reviewer=row["assigned_reviewer"],
+                    estimated_review_time=row["estimated_review_time"],
+                    submission_timestamp=datetime.fromisoformat(row["submission_timestamp"]) if row["submission_timestamp"] else None,
+                    review_deadline=datetime.fromisoformat(row["review_deadline"]) if row["review_deadline"] else None
+                )
+            return None
     
     def get_run_record(self, run_id: str) -> Optional[RunRecord]:
         """
