@@ -264,3 +264,5 @@ This is a rapid engineering demonstrating:
 - ✅ Working MVP with UI and API
 
 For questions or issues, check the audit logs and API documentation.
+cd /Users/sumedhtuttagunta/code/AgenticQuote
+python -m uvicorn app.complete:create_complete_app --reload --host 0.0.0.0 --port 8000

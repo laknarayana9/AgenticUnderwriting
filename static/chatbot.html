@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Quote Assistant - Agentic Underwriting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-container {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        .message {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .typing-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 20px;
+            border: 2px solid #3B82F6;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .quick-action {
+            transition: all 0.2s ease;
+        }
+        .quick-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <!-- Header -->
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                🤖 Chatbot Quote Assistant
+            </h1>
+            <p class="text-gray-600">AI-powered insurance quote processing with conversational interface</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Chat Area -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">💬 Quote Conversation</h2>
+                    
+                    <!-- Chat Messages -->
+                    <div id="chatMessages" class="chat-container space-y-4 mb-4 h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg">
+                        <!-- Welcome Message -->
+                        <div class="message mb-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-sm font-bold">🤖</span>
+                                </div>
+                                <div class="bg-blue-100 rounded-lg p-4 max-w-xs lg:max-w-md">
+                                    <p class="text-sm text-blue-900">
+                                        👋 Hello! I'm your AI quote assistant. I can help you get an insurance quote by asking a few questions about your property.
+                                        <br><br>
+                                        Just tell me about your property, or choose one of the quick options below!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mb-4">
+                        <h3 class="text-sm font-medium text-gray-700 mb-2">Quick Actions:</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="startQuoteFlow()" class="quick-action bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 text-sm">
+                                🏠 Start New Quote
+                            </button>
+                            <button onclick="askForHelp()" class="quick-action bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 text-sm">
+                                ❓ What Info Needed?
+                            </button>
+                            <button onclick="viewRecentQuotes()" class="quick-action bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 text-sm">
+                                📋 Recent Quotes
+                            </button>
+                            <button onclick="explainProcess()" class="quick-action bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 text-sm">
+                                📖 How It Works
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="flex space-x-2">
+                        <input type="text" id="userInput" 
+                               placeholder="Type your message here..." 
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               onkeypress="handleKeyPress(event)">
+                        <button onclick="sendMessage()" 
+                                class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quote Form Panel -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">📝 Quote Details</h2>
+                    
+                    <div id="quoteFormPanel" class="space-y-4">
+                        <div class="text-sm text-gray-600 mb-4">
+                            Fill in the form below or chat with me to complete your quote!
+                        </div>
+
+                        <form id="quoteForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Applicant Name</label>
+                                <input type="text" id="applicant_name" required
+                                       value="John Doe"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Property Address</label>
+                                <input type="text" id="address" required
+                                       value="123 Main St, Irvine, CA 92620"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                                <select id="property_type" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="single_family" selected>Single Family</option>
+                                    <option value="condo">Condominium</option>
+                                    <option value="townhouse">Townhouse</option>
+                                    <option value="commercial">Commercial</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Coverage Amount ($)</label>
+                                <input type="number" id="coverage_amount" required min="10000" step="1000"
+                                       value="500000"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Construction Year</label>
+                                <input type="number" id="construction_year" min="1800" max="2024"
+                                       value="1985"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Square Footage</label>
+                                <input type="number" id="square_footage" min="100"
+                                       value="2000"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Roof Type</label>
+                                <select id="roof_type"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select...</option>
+                                    <option value="asphalt_shingle">Asphalt Shingle</option>
+                                    <option value="metal">Metal</option>
+                                    <option value="tile" selected>Tile</option>
+                                    <option value="wood_shake">Wood Shake</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Foundation Type</label>
+                                <select id="foundation_type"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Select...</option>
+                                    <option value="concrete" selected>Concrete</option>
+                                    <option value="crawlspace">Crawlspace</option>
+                                    <option value="basement">Basement</option>
+                                    <option value="slab">Slab</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center space-x-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="use_agentic" class="mr-2" checked>
+                                    <span class="text-sm text-gray-700">Enable Agentic Behavior</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="use_queue" class="mr-2" checked>
+                                    <span class="text-sm text-gray-700">Use Async Queue</span>
+                                </label>
+                            </div>
+
+                            <button type="submit" 
+                                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                Submit Quote
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div id="resultsPanel" class="mt-6 space-y-4" style="display: none;">
+                        <h3 class="text-lg font-semibold mb-3">📊 Quote Results</h3>
+                        <div id="quoteResults" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentRunId = null;
+        let conversationState = 'greeting';
+        let collectedInfo = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRecentQuotes();
+        });
+
+        // Form submission
+        document.getElementById('quoteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await submitQuote();
+        });
+
+        // Chat functions
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            input.value = '';
+            
+            await processMessage(message);
+        }
+
+        function addMessage(content, sender, typing = false) {
+            const messagesDiv = document.getElementById('chatMessages');
+            
+            if (typing) {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message mb-4';
+                typingDiv.innerHTML = `
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-bold">🤖</span>
+                        </div>
+                        <div class="bg-blue-100 rounded-lg p-4 max-w-xs lg:max-w-md">
+                            <div class="typing-indicator mr-2"></div>
+                            <p class="text-sm text-blue-900">Thinking...</p>
+                        </div>
+                    </div>
+                `;
+                messagesDiv.appendChild(typingDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                return;
+            }
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message mb-4';
+            
+            const avatar = sender === 'user' ? '👤' : '🤖';
+            const bgColor = sender === 'user' ? 'bg-green-100' : 'bg-blue-100';
+            const textColor = sender === 'user' ? 'text-green-900' : 'text-blue-900';
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0 w-8 h-8 bg-${sender === 'user' ? 'green' : 'blue'}-600 rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-bold">${avatar}</span>
+                    </div>
+                    <div class="${bgColor} rounded-lg p-4 max-w-xs lg:max-w-md">
+                        <p class="text-sm ${textColor}">${content}</p>
+                    </div>
+                </div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function processMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Process based on conversation state
+            switch (conversationState) {
+                case 'greeting':
+                    await handleGreetingState(lowerMessage);
+                    break;
+                case 'collecting_info':
+                    await handleInfoCollection(lowerMessage);
+                    break;
+                case 'reviewing':
+                    await handleReviewState(lowerMessage);
+                    break;
+            }
+        }
+
+        async function handleGreetingState(message) {
+            if (message.includes('quote') || message.includes('start') || message.includes('new')) {
+                addMessage("Great! Let's start your quote. I'll need some information about your property.", 'bot');
+                await askForRequiredInfo();
+                conversationState = 'collecting_info';
+            } else if (message.includes('help')) {
+                showHelpMessage();
+            } else if (message.includes('how') || message.includes('explain')) {
+                showProcessExplanation();
+            } else if (message.includes('recent') || message.includes('history')) {
+                showRecentQuotes();
+            } else {
+                addMessage("I can help you with insurance quotes! Try 'start quote', 'help', or 'how it works'.", 'bot');
+            }
+        }
+
+        async function handleInfoCollection(message) {
+            // Extract information from user message
+            if (message.includes('name')) {
+                const name = extractName(message);
+                if (name) {
+                    collectedInfo.applicant_name = name;
+                    document.getElementById('applicant_name').value = name;
+                    addMessage(`Got it! Name: ${name}`, 'bot');
+                }
+            }
+            
+            if (message.includes('address')) {
+                const address = extractAddress(message);
+                if (address) {
+                    collectedInfo.address = address;
+                    document.getElementById('address').value = address;
+                    addMessage(`Address updated: ${address}`, 'bot');
+                }
+            }
+            
+            if (message.includes('coverage') || message.includes('amount')) {
+                const coverage = extractNumber(message);
+                if (coverage) {
+                    collectedInfo.coverage_amount = coverage;
+                    document.getElementById('coverage_amount').value = coverage;
+                    addMessage(`Coverage amount: $${coverage.toLocaleString()}`, 'bot');
+                }
+            }
+            
+            // Check if we have enough info
+            if (collectedInfo.applicant_name && collectedInfo.address && collectedInfo.coverage_amount) {
+                addMessage("Perfect! I have all the basic information. Would you like me to submit this quote for you, or do you need to add more details?", 'bot');
+                conversationState = 'reviewing';
+            } else {
+                await askForMissingInfo();
+            }
+        }
+
+        async function handleReviewState(message) {
+            if (message.includes('submit') || message.includes('send') || message.includes('yes')) {
+                await submitQuote();
+            } else if (message.includes('add') || message.includes('more') || message.includes('details')) {
+                await askForAdditionalInfo();
+            } else if (message.includes('change') || message.includes('modify')) {
+                addMessage("What would you like to change? You can tell me 'name', 'address', 'coverage', etc.", 'bot');
+            }
+        }
+
+        async function askForRequiredInfo() {
+            addMessage("I'll need some basic information to get you a quote:", 'bot');
+            setTimeout(() => {
+                addMessage("1. What's your full name?", 'bot');
+            }, 500);
+            setTimeout(() => {
+                addMessage("2. What's the property address?", 'bot');
+            }, 1000);
+            setTimeout(() => {
+                addMessage("3. How much coverage do you need? (e.g., 'coverage $500,000')", 'bot');
+            }, 1500);
+        }
+
+        async function askForMissingInfo() {
+            const missing = [];
+            if (!collectedInfo.applicant_name) missing.push("name");
+            if (!collectedInfo.address) missing.push("address");
+            if (!collectedInfo.coverage_amount) missing.push("coverage amount");
+            
+            if (missing.length > 0) {
+                addMessage(`I still need: ${missing.join(', ')}. You can tell me like: "name: John Doe"`, 'bot');
+            }
+        }
+
+        async function askForAdditionalInfo() {
+            addMessage("You can provide additional details like:", 'bot');
+            setTimeout(() => {
+                addMessage("• Construction year (e.g., 'year: 1985')", 'bot');
+            }, 500);
+            setTimeout(() => {
+                addMessage("• Square footage (e.g., 'sqft: 2000')", 'bot');
+            }, 1000);
+            setTimeout(() => {
+                addMessage("• Roof type (e.g., 'roof: tile')", 'bot');
+            }, 1500);
+            setTimeout(() => {
+                addMessage("• Foundation type (e.g., 'foundation: concrete')", 'bot');
+            }, 2000);
+        }
+
+        function showHelpMessage() {
+            addMessage("Here's how I can help you:", 'bot');
+            setTimeout(() => {
+                addMessage("🏠 **Start Quote** - Begin a new insurance quote", 'bot');
+            }, 300);
+            setTimeout(() => {
+                addMessage("❓ **What Info Needed** - See what information I need", 'bot');
+            }, 600);
+            setTimeout(() => {
+                addMessage("📋 **Recent Quotes** - View your quote history", 'bot');
+            }, 900);
+            setTimeout(() => {
+                addMessage("📖 **How It Works** - Learn about the AI process", 'bot');
+            }, 1200);
+        }
+
+        function showProcessExplanation() {
+            addMessage("Here's how our AI-powered underwriting works:", 'bot');
+            setTimeout(() => {
+                addMessage("🤖 **AI Analysis**: I analyze your property details using advanced algorithms", 'bot');
+            }, 300);
+            setTimeout(() => {
+                addMessage("📚 **Knowledge Base**: I access underwriting guidelines and historical data", 'bot');
+            }, 600);
+            setTimeout(() => {
+                addMessage("⚖️ **Risk Assessment**: I evaluate wildfire, flood, and other risks", 'bot');
+            }, 900);
+            setTimeout(() => {
+                addMessage("💰 **Instant Quote**: Get pricing and decisions in real-time", 'bot');
+            }, 1200);
+            setTimeout(() => {
+                addMessage("👥 **Human Review**: Complex cases get expert underwriter review", 'bot');
+            }, 1500);
+        }
+
+        // Quick action functions
+        function startQuoteFlow() {
+            addMessage("Let's start your insurance quote!", 'bot');
+            setTimeout(() => {
+                askForRequiredInfo();
+            }, 500);
+            conversationState = 'collecting_info';
+        }
+
+        function askForHelp() {
+            showHelpMessage();
+        }
+
+        function viewRecentQuotes() {
+            showRecentQuotes();
+        }
+
+        function explainProcess() {
+            showProcessExplanation();
+        }
+
+        // Utility functions
+        function extractName(message) {
+            const match = message.match(/name[:\s]+(.+)/i);
+            return match ? match[1].trim() : null;
+        }
+
+        function extractAddress(message) {
+            const match = message.match(/address[:\s]+(.+)/i);
+            return match ? match[1].trim() : null;
+        }
+
+        function extractNumber(message) {
+            const match = message.match(/\$?(\d+(?:,\d{3})*)/);
+            if (match) {
+                return parseInt(match[1].replace(',', ''));
+            }
+            return null;
+        }
+
+        // Quote submission
+        async function submitQuote() {
+            const formData = {
+                applicant_name: document.getElementById('applicant_name').value,
+                address: document.getElementById('address').value,
+                property_type: document.getElementById('property_type').value,
+                coverage_amount: parseInt(document.getElementById('coverage_amount').value),
+                construction_year: parseInt(document.getElementById('construction_year').value),
+                square_footage: parseInt(document.getElementById('square_footage').value),
+                roof_type: document.getElementById('roof_type').value,
+                foundation_type: document.getElementById('foundation_type').value,
+                additional_info: document.getElementById('additional_info')?.value || ''
+            };
+
+            const useAgentic = document.getElementById('use_agentic').checked;
+            const useQueue = document.getElementById('use_queue').checked;
+
+            addMessage("🚀 Submitting your quote for AI underwriting...", 'bot');
+
+            try {
+                const endpoint = useQueue ? '/quote/submit' : '/quote/run';
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        submission: formData,
+                        use_agentic: useAgentic
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    if (useQueue) {
+                        currentRunId = result.message_id;
+                        addMessage(`✅ Quote submitted to queue! ID: ${result.message_id}`, 'bot');
+                        addMessage("📊 I'll process this asynchronously and update you on the status.", 'bot');
+                        startQueueStatusPolling(result.message_id);
+                    } else {
+                        currentRunId = result.run_id;
+                        displayQuoteResults(result);
+                        addMessage("✅ Your quote has been processed! Check the results panel.", 'bot');
+                    }
+                    
+                    // Save to recent quotes
+                    saveQuoteToHistory(formData, result);
+                } else {
+                    addMessage(`❌ Error: ${result.detail || 'Failed to submit quote'}`, 'bot');
+                }
+            } catch (error) {
+                addMessage(`❌ Connection error: ${error.message}`, 'bot');
+            }
+        }
+
+        function displayQuoteResults(result) {
+            const resultsPanel = document.getElementById('resultsPanel');
+            const quoteResults = document.getElementById('quoteResults');
+            
+            let resultsHTML = '';
+            
+            // Decision
+            if (result.decision) {
+                const decisionColor = result.decision.decision === 'ACCEPT' ? 'green' : 
+                                  result.decision.decision === 'REFER' ? 'yellow' : 'red';
+                resultsHTML += `
+                    <div class="bg-${decisionColor}-50 border border-${decisionColor}-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-${decisionColor}-800">📋 Decision: ${result.decision.decision}</h4>
+                        <p class="text-sm text-${decisionColor}-700 mt-1">${result.decision.rationale}</p>
+                    </div>
+                `;
+            }
+
+            // Premium
+            if (result.premium) {
+                resultsHTML += `
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-blue-800">💰 Premium</h4>
+                        <div class="text-sm text-blue-700">
+                            <div>Annual: $${result.premium.annual_premium?.toLocaleString()}</div>
+                            <div>Monthly: $${result.premium.monthly_premium?.toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Human Review
+            if (result.requires_human_review) {
+                resultsHTML += `
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-orange-800">👥 Human Review Required</h4>
+                        <p class="text-sm text-orange-700">This case requires expert underwriter review</p>
+                    </div>
+                `;
+            }
+
+            quoteResults.innerHTML = resultsHTML;
+            resultsPanel.style.display = 'block';
+        }
+
+        function startQueueStatusPolling(messageId) {
+            const checkStatus = async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/queue/${messageId}`);
+                    const status = await response.json();
+                    
+                    if (response.ok) {
+                        if (status.status === 'completed') {
+                            addMessage(`✅ Quote processing completed!`, 'bot');
+                            displayQuoteResults(status);
+                        } else if (status.status === 'failed') {
+                            addMessage(`❌ Processing failed: ${status.error_message}`, 'bot');
+                        } else {
+                            addMessage(`📊 Status: ${status.status} - Still processing...`, 'bot');
+                            setTimeout(checkStatus, 3000); // Check again in 3 seconds
+                        }
+                    }
+                } catch (error) {
+                    addMessage(`❌ Error checking status: ${error.message}`, 'bot');
+                }
+            };
+            
+            setTimeout(checkStatus, 2000); // First check after 2 seconds
+        }
+
+        // Local storage functions
+        function saveQuoteToHistory(submission, result) {
+            const history = JSON.parse(localStorage.getItem('quoteHistory') || '[]');
+            history.unshift({
+                timestamp: new Date().toISOString(),
+                submission: submission,
+                result: result,
+                run_id: result.run_id || result.message_id
+            });
+            
+            // Keep only last 10 quotes
+            if (history.length > 10) {
+                history.pop();
+            }
+            
+            localStorage.setItem('quoteHistory', JSON.stringify(history));
+        }
+
+        function loadRecentQuotes() {
+            const history = JSON.parse(localStorage.getItem('quoteHistory') || '[]');
+            const recentDiv = document.getElementById('recentQuotes');
+            
+            if (history.length === 0) {
+                recentDiv.innerHTML = '<p class="text-gray-500">No recent quotes</p>';
+                return;
+            }
+            
+            let html = '<div class="space-y-2">';
+            history.slice(0, 5).forEach(quote => {
+                const date = new Date(quote.timestamp).toLocaleDateString();
+                const decision = quote.result.decision?.decision || 'Processing';
+                const color = decision === 'ACCEPT' ? 'green' : decision === 'REFER' ? 'yellow' : 'red';
+                
+                html += `
+                    <div class="bg-white border rounded-lg p-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium">${date}</span>
+                            <span class="text-xs bg-${color}-100 text-${color}-800 px-2 py-1 rounded">${decision}</span>
+                        </div>
+                        <div class="text-xs text-gray-600">
+                            ${quote.submission.address} - $${quote.submission.coverage_amount?.toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            recentDiv.innerHTML = html;
+        }
+
+        function showRecentQuotes() {
+            addMessage("📋 Here are your recent quotes:", 'bot');
+            setTimeout(() => {
+                const history = JSON.parse(localStorage.getItem('quoteHistory') || '[]');
+                if (history.length > 0) {
+                    history.slice(0, 3).forEach((quote, index) => {
+                        const date = new Date(quote.timestamp).toLocaleDateString();
+                        const decision = quote.result.decision?.decision || 'Processing';
+                        addMessage(`${index + 1}. ${date} - ${quote.submission.address} - ${decision}`, 'bot');
+                    });
+                } else {
+                    addMessage("No recent quotes found.", 'bot');
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>
