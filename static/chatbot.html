@@ -723,6 +723,9 @@
                         <div class="text-xs text-gray-600">
                             ${quote.submission.address} - $${quote.submission.coverage_amount?.toLocaleString()}
                         </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            ID: ${quote.run_id || quote.message_id}
+                        </div>
                     </div>
                 `;
             });

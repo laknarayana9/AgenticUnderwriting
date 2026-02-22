@@ -502,7 +502,7 @@
                     recentRunsDiv.innerHTML = data.runs.map(run => `
                         <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
                             <div>
-                                <span class="font-mono text-sm">${run.run_id.substring(0, 8)}...</span>
+                                <span class="font-mono text-sm">${run.run_id}</span>
                                 <span class="text-gray-600 text-sm ml-2">${new Date(run.created_at).toLocaleString()}</span>
                             </div>
                             <div>
