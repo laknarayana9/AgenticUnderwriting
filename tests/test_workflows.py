@@ -616,46 +616,38 @@ class TestBusinessProcessIntegration(unittest.TestCase):
     
     def test_error_recovery_workflow(self):
         """Test error recovery in workflow."""
-        from models.schemas import QuoteSubmission
-        
-        quote_submission = QuoteSubmission(
-            applicant_name="John Doe",
-            address="123 Main St",
-            property_type="single_family",
-            coverage_amount=250000.0
-        )
-        
         # Simulate workflow with error
         workflow_state = WorkflowState(
-            quote_submission=quote_submission,
             current_node="risk_assessment",
-            missing_info=["construction_year"],
-            citation_guardrail_triggered=False
+            completed_nodes=[],
+            pending_nodes=["risk_assessment", "rating", "decision"],
+            error_count=1
         )
         
-        # Error recovery logic - if missing info, request it
-        if workflow_state.missing_info:
-            workflow_state.current_node = "missing_info_request"
-            recovery_action = "request_info"
-        else:
+        # Error recovery logic
+        if workflow_state.error_count < 3:
+            # Retry the failed node
             workflow_state.current_node = "risk_assessment"
-            recovery_action = "continue_processing"
-        
-        self.assertEqual(recovery_action, "request_info")
-        self.assertEqual(workflow_state.current_node, "missing_info_request")
-        
-        # Test recovery after info is provided
-        workflow_state.missing_info = []
-        workflow_state.additional_answers["construction_year"] = "1995"
-        
-        if workflow_state.missing_info:
-            recovery_action = "request_info"
+            recovery_action = "retry"
         else:
-            workflow_state.current_node = "risk_assessment"
-            recovery_action = "continue_processing"
+            # Escalate to human review
+            workflow_state.current_node = "human_review_required"
+            recovery_action = "escalate"
         
-        self.assertEqual(recovery_action, "continue_processing")
+        self.assertEqual(recovery_action, "retry")
         self.assertEqual(workflow_state.current_node, "risk_assessment")
+        
+        # Test escalation after multiple errors
+        workflow_state.error_count = 3
+        
+        if workflow_state.error_count < 3:
+            recovery_action = "retry"
+        else:
+            workflow_state.current_node = "human_review_required"
+            recovery_action = "escalate"
+        
+        self.assertEqual(recovery_action, "escalate")
+        self.assertEqual(workflow_state.current_node, "human_review_required")
 
 
 if __name__ == '__main__':

@@ -275,27 +275,21 @@ def create_complete_app() -> FastAPI:
         Approve a referred quote after human review.
         """
         try:
-            # Store approval data in database
-            from models.schemas import HumanReviewRecord
+            # Store approval data
+            approval_record = {
+                "run_id": run_id,
+                "status": "human_approved",
+                "original_decision": "REFER",
+                "final_decision": approval_data.get("final_decision", "REFER"),
+                "reviewer_notes": approval_data.get("reviewer_notes", ""),
+                "approved_premium": approval_data.get("approved_premium", 0),
+                "reviewer": approval_data.get("reviewer_name", "Human Reviewer"),
+                "review_timestamp": datetime.now().isoformat(),
+                "submission_timestamp": datetime.now().isoformat()
+            }
             
-            approval_record = HumanReviewRecord(
-                run_id=run_id,
-                status="human_approved",
-                requires_human_review=False,
-                final_decision=approval_data.get("final_decision", "REFER"),
-                reviewer=approval_data.get("reviewer", "Human Reviewer"),
-                review_timestamp=datetime.now(),
-                approved_premium=float(approval_data.get("approved_premium", "0")),
-                reviewer_notes=approval_data.get("reviewer_notes", ""),
-                review_priority=approval_data.get("review_priority", "medium"),
-                assigned_reviewer=approval_data.get("assigned_reviewer", "underwriting_team"),
-                estimated_review_time="Completed",
-                submission_timestamp=datetime.now(),
-                review_deadline=datetime.now()
-            )
-            
-            # Save to database
-            db.save_human_review_record(approval_record)
+            # Store in memory for retrieval
+            human_review_store[run_id] = approval_record
             
             return approval_record
             

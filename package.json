@@ -1,0 +1,29 @@
+{
+  "name": "agenticquote",
+  "version": "1.0.0",
+  "description": "A 2-day working version of an agentic insurance quote processing and underwriting system built with LangGraph, FastAPI, and RAG.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Use 'npm run test:e2e' for Playwright tests\" && exit 1",
+    "test:e2e": "npx playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laknarayana9/AgenticQuote.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/laknarayana9/AgenticQuote/issues"
+  },
+  "homepage": "https://github.com/laknarayana9/AgenticQuote#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

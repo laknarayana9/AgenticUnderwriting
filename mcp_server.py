@@ -422,18 +422,17 @@ async def main():
     server = Server("agentic-underwriting")
     
     # Register tools
-    for tool in TOOLS:
-        server.add_tool(tool)
+    server.set_tools(TOOLS)
     
     # Add resources
-    await server.add_resource(
+    server.set_resources([
         Resource(
             uri="underwriting://guidelines",
             name="Underwriting Guidelines",
             description="Comprehensive underwriting guidelines and best practices",
             mimeType="text/plain"
         )
-    )
+    ])
     
     # Run the server
     async with stdio_server() as (read_stream, write_stream):
