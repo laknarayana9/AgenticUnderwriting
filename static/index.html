@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agentic Quote-to-Underwrite Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/evidence-ui.css">
     <style>
         .loading { display: none; }
         .loading.show { display: block; }
@@ -72,15 +73,15 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         <label class="flex items-center">
-                            <input type="checkbox" id="use_agentic" class="mr-2">
-                            <span class="text-sm text-gray-700">Enable Agentic Behavior</span>
+                            <input type="checkbox" id="use_agentic" checked
+                                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">🤖 Use Evidence-First AI (RAG)</span>
                         </label>
                         <label class="flex items-center">
                             <input type="checkbox" id="use_queue" class="mr-2" checked>
                             <span class="text-sm text-gray-700">Use Async Queue</span>
                         </label>
                     </div>
-                </div>
                 
                 <button type="submit" 
                         class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -88,6 +89,9 @@
                 </button>
             </form>
         </div>
+        
+        <!-- Evidence Panel (Hidden by default) -->
+        <div id="evidence-panel-container"></div>
         
         <!-- Loading State -->
         <div id="loading" class="loading bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
@@ -330,13 +334,63 @@
                     elements.citationsCard.style.display = 'block';
                     const citationsHtml = result.citations.map(citation => `
                         <div class="mb-2 p-3 bg-gray-50 border border-gray-200 rounded">
-                            <p class="font-medium">${citation.text}</p>
-                            <p class="text-sm text-gray-500">Relevance: ${(citation.relevance_score * 100).toFixed(1)}%</p>
+                            <p class="font-medium">${citation.text || citation.doc_title}</p>
+                            <p class="text-sm text-gray-500">Relevance: ${citation.relevance_score ? (citation.relevance_score * 100).toFixed(1) : 'N/A'}%</p>
                         </div>
                     `).join('');
                     elements.citationsContent.innerHTML = citationsHtml;
                 } else {
                     elements.citationsCard.style.display = 'none';
+                }
+                
+                // Show evidence panel if RAG was used and evidence is available
+                console.log('🔍 Full result object:', result);
+                console.log('🔍 Result decision:', result.decision);
+                console.log('🔍 RAG evidence:', result.rag_evidence);
+                console.log('🔍 Use agentic:', formData.use_agentic);
+                
+                if (formData.use_agentic && result.rag_evidence && result.rag_evidence.length > 0) {
+                    console.log('🎯 Attempting to show evidence panel...');
+                    
+                    // Wait for evidence panel to be loaded
+                    setTimeout(() => {
+                        try {
+                            if (window.evidenceUI) {
+                                console.log('🎯 Evidence UI available, preparing data...');
+                                
+                                // Check if result.decision exists and has the expected structure
+                                if (!result.decision) {
+                                    console.error('❌ result.decision is undefined');
+                                    return;
+                                }
+                                
+                                const decisionData = {
+                                    decision: result.decision.decision,
+                                    confidence: result.decision.confidence,
+                                    reason: result.decision.reason,
+                                    evidence: result.rag_evidence,
+                                    required_questions: result.required_questions || [],
+                                    referral_triggers: result.referral_triggers || [],
+                                    conditions: result.conditions || [],
+                                    citations: result.citations || []
+                                };
+                                
+                                console.log('🎯 Prepared decisionData:', decisionData);
+                                window.evidenceUI.displayEvidence(formData, decisionData);
+                            } else {
+                                console.warn('⚠️ Evidence UI not available');
+                            }
+                        } catch (error) {
+                            console.error('❌ Error displaying evidence:', error);
+                            console.error('❌ Error stack:', error.stack);
+                        }
+                    }, 1000); // Increased timeout to ensure UI loads
+                } else {
+                    console.log('ℹ️ Not showing evidence panel - conditions not met:', {
+                        use_agentic: formData.use_agentic,
+                        has_rag_evidence: !!result.rag_evidence,
+                        evidence_count: result.rag_evidence ? result.rag_evidence.length : 0
+                    });
                 }
                 
                 // Update run details
@@ -345,9 +399,15 @@
                         <p><strong>Run ID:</strong> ${result.run_id}</p>
                         <p><strong>Status:</strong> ${result.status}</p>
                         <p><strong>Processing Time:</strong> ${result.processing_time_ms}ms</p>
-                        <p><strong>Message:</strong> ${result.message}</p>
+                        ${result.rag_assessment ? `
+                            <p><strong>RAG Evidence Quality:</strong> ${result.rag_assessment.assessment.quality}</p>
+                            <p><strong>Evidence Chunks:</strong> ${result.rag_assessment.chunks_count}</p>
+                        ` : ''}
                     </div>
                 `;
+                
+                // Update recent runs
+                loadRecentRuns();
                 
             } catch (error) {
                 elements.loading.style.display = 'none';
@@ -750,6 +810,17 @@
         
         // Initialize
         loadRecentRuns();
+    </script>
+    
+    <!-- Evidence UI Components -->
+    <script src="/static/js/evidence-ui.js"></script>
+    <script>
+        // Load evidence panel template
+        fetch('/templates/evidence-panel.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('evidence-panel-container').innerHTML = html;
+            });
     </script>
 </body>
 </html>

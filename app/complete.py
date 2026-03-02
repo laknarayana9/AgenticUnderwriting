@@ -18,6 +18,10 @@ from config import settings
 from storage.database import UnderwritingDB, get_db
 
 # Import schemas
+from models.schemas import QuoteSubmission, QuoteRunResponse, Decision
+
+# Import RAG components
+from app.rag_api import router as rag_router
 from models.schemas import HumanReviewRecord, QuoteRecord
 
 # Database-backed storage for human review approvals
@@ -52,6 +56,9 @@ def create_complete_app() -> FastAPI:
     # Include Verisk mock API router
     from app.verisk_mock import router as verisk_router
     app.include_router(verisk_router)
+    
+    # Include RAG API router
+    app.include_router(rag_router)
     
     # Import PDF parser for property data
     from app.pdf_parser import initialize_property_cache, get_property_cache
@@ -235,20 +242,108 @@ def create_complete_app() -> FastAPI:
             # Simulate processing
             run_id = str(uuid.uuid4())
             
-            # Mock decision based on adjusted coverage amount
+            # RAG-enhanced decision making
+            rag_decision = None
+            rag_evidence = None
+            
+            if use_agentic:
+                try:
+                    # Import RAG components
+                    from app.rag_engine import get_rag_engine
+                    from app.evidence_verifier import get_evidence_verifier
+                    from app.decision_composer import get_decision_composer
+                    
+                    # Initialize RAG components
+                    rag = get_rag_engine()
+                    verifier = get_evidence_verifier()
+                    composer = get_decision_composer()
+                    
+                    # Build RAG query from submission
+                    query_parts = [
+                        f"property type {submission.get('property_type', 'unknown')}",
+                        f"coverage amount {coverage}",
+                        f"construction year {submission.get('construction_year', 'unknown')}",
+                        f"roof type {submission.get('roof_type', 'unknown')}",
+                        f"square footage {submission.get('square_footage', 'unknown')}",
+                        "eligibility requirements"
+                    ]
+                    query = " ".join(query_parts)
+                    
+                    # Retrieve evidence
+                    chunks = rag.retrieve(query, n_results=5)
+                    
+                    if chunks:
+                        # Verify evidence
+                        assessment = verifier.verify_evidence(chunks, "eligibility")
+                        
+                        # Compose decision
+                        structured_decision = composer.compose_decision(
+                            chunks=chunks,
+                            query_type="eligibility",
+                            submission_data=submission
+                        )
+                        
+                        # Use RAG decision
+                        rag_decision = {
+                            "decision": structured_decision.decision_type.value,
+                            "confidence": structured_decision.confidence_score,
+                            "reason": structured_decision.primary_reason,
+                            "evidence": [
+                                {
+                                    "chunk_id": chunk.chunk_id,
+                                    "doc_title": chunk.metadata.get("doc_title", "Unknown"),
+                                    "section": chunk.section,
+                                    "text": chunk.text,
+                                    "relevance_score": chunk.relevance_score,
+                                    "rule_strength": chunk.metadata.get("rule_strength", "informational")
+                                }
+                                for chunk in chunks
+                            ],
+                            "required_questions": structured_decision.required_questions,
+                            "referral_triggers": structured_decision.referral_triggers,
+                            "conditions": structured_decision.conditions,
+                            "citations": structured_decision.citations
+                        }
+                        
+                        rag_evidence = {
+                            "assessment": {
+                                "quality": assessment.quality.value,
+                                "confidence": assessment.confidence_score,
+                                "rule_strength": assessment.rule_strength.value
+                            },
+                            "chunks_count": len(chunks)
+                        }
+                        
+                        logger.info(f"RAG decision: {rag_decision['decision']} with confidence {rag_decision['confidence']:.3f}")
+                    else:
+                        logger.warning("No evidence retrieved from RAG, falling back to mock decision")
+                        
+                except Exception as e:
+                    logger.error(f"RAG processing failed: {e}, falling back to mock decision")
+            
+            # Mock decision based on adjusted coverage amount (fallback)
             coverage = adjusted_coverage
-            if coverage > 500000:
-                decision = "REFER"
-                reason = "Coverage amount exceeds maximum limit - requires human review"
-                requires_human_review = True
-            elif coverage < 100000:
-                decision = "REFER"
-                reason = "Coverage amount below minimum threshold - requires human review"
-                requires_human_review = True
+            if rag_decision:
+                # Use RAG decision
+                decision = rag_decision["decision"]
+                reason = rag_decision["reason"]
+                confidence = rag_decision["confidence"]
+                requires_human_review = decision in ["REFER", "DECLINE"]
             else:
-                decision = "ACCEPT"
-                reason = "Standard risk profile"
-                requires_human_review = False
+                # Fallback to mock decision logic
+                if coverage > 500000:
+                    decision = "REFER"
+                    reason = "Coverage amount exceeds maximum limit - requires human review"
+                    requires_human_review = True
+                elif coverage < 100000:
+                    decision = "REFER"
+                    reason = "Coverage amount below minimum threshold - requires human review"
+                    requires_human_review = True
+                else:
+                    decision = "ACCEPT"
+                    reason = "Standard risk profile"
+                    requires_human_review = False
+                confidence = 0.85
             
             # Mock premium calculation
             premium = coverage * 0.002  # 0.2% of coverage
@@ -269,7 +364,7 @@ def create_complete_app() -> FastAPI:
                 "status": "completed",
                 "decision": {
                     "decision": decision,
-                    "confidence": 0.85,
+                    "confidence": confidence,
                     "reason": reason
                 },
                 "premium": {
@@ -277,14 +372,18 @@ def create_complete_app() -> FastAPI:
                     "monthly_premium": premium / 12,
                     "coverage_amount": coverage
                 },
-                "citations": [
+                "citations": rag_decision["citations"] if rag_decision else [
                     {
                         "doc_id": "test_doc",
                         "text": f"Mock citation for {decision} decision",
                         "relevance_score": 0.9
                     }
                 ],
-                "required_questions": [],
+                "required_questions": rag_decision["required_questions"] if rag_decision else [],
+                "referral_triggers": rag_decision["referral_triggers"] if rag_decision else [],
+                "conditions": rag_decision["conditions"] if rag_decision else [],
+                "rag_evidence": rag_decision["evidence"] if rag_decision else [],
+                "rag_assessment": rag_evidence,
                 "rce_adjustment": rce_adjustment,
                 "requires_human_review": requires_human_review,
                 "human_review_details": {
@@ -830,3 +929,10 @@ def create_complete_app() -> FastAPI:
             raise HTTPException(status_code=500, detail=f"Failed to get property stats: {str(e)}")
     
     return app
+
+# Create app instance for uvicorn
+app = create_complete_app()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

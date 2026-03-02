@@ -1,0 +1,363 @@
+<!-- Evidence-First Underwriting Three-Panel UI -->
+<div class="evidence-container" style="display: none;">
+    
+    <!-- Panel 1: Source Document Viewer -->
+    <div class="evidence-panel">
+        <div class="panel-header">
+            <h3>📄 Source Documents</h3>
+            <button onclick="evidenceUI.generateEvidenceReport()" class="btn btn-sm btn-secondary">
+                📥 Export Report
+            </button>
+        </div>
+        <div class="panel-content">
+            <div class="document-viewer">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel 2: Decision Panel -->
+    <div class="evidence-panel">
+        <div class="panel-header">
+            <h3>⚖️ Underwriting Decision</h3>
+        </div>
+        <div class="panel-content">
+            <!-- Decision Summary -->
+            <div class="decision-summary">
+                <div class="decision-type">REFER</div>
+                <div class="confidence-indicator">
+                    <span class="confidence-text">85% confidence</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill high" style="width: 85%"></div>
+                    </div>
+                </div>
+                <div class="decision-reason">
+                    Requires underwriter review due to risk factors identified in evidence
+                </div>
+            </div>
+            
+            <!-- Required Questions -->
+            <div class="decision-section">
+                <h4>❓ Required Information</h4>
+                <div class="required-questions">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Referral Triggers -->
+            <div class="decision-section">
+                <h4>🔄 Referral Triggers</h4>
+                <div class="referral-triggers">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Conditions -->
+            <div class="decision-section">
+                <h4>📋 Conditions</h4>
+                <div class="decision-conditions">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel 3: Evidence Trace -->
+    <div class="evidence-panel">
+        <div class="panel-header">
+            <h3>🔍 Evidence Trace</h3>
+            <div class="evidence-stats">
+                <span class="stat-item">
+                    <span class="stat-label">Chunks:</span>
+                    <span class="stat-value" id="evidence-count">0</span>
+                </span>
+                <span class="stat-item">
+                    <span class="stat-label">Sources:</span>
+                    <span class="stat-value" id="source-count">0</span>
+                </span>
+            </div>
+        </div>
+        <div class="panel-content">
+            <div class="evidence-list">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evidence Detail Modal -->
+<div id="evidence-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📋 Evidence Details</h3>
+            <button class="modal-close" onclick="closeEvidenceModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="evidence-detail-content">
+                <!-- Evidence details will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Evidence Panel Specific Styles */
+.decision-section {
+    margin-bottom: 1.5rem;
+}
+
+.decision-section h4 {
+    color: #1f2937;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.evidence-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.stat-item {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.stat-label {
+    color: #6b7280;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+}
+
+.modal-close:hover {
+    color: #1f2937;
+}
+
+.modal-body {
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: calc(80vh - 80px);
+}
+
+/* Button Styles */
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+}
+
+/* Highlight pulse animation */
+.highlight-pulse {
+    animation: pulse 2s ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
+    }
+    50% {
+        background-color: rgba(59, 130, 246, 0.3);
+        border-color: #2563eb;
+    }
+}
+</style>
+
+<script>
+function closeEvidenceModal() {
+    document.getElementById('evidence-modal').style.display = 'none';
+}
+
+// Update evidence statistics
+function updateEvidenceStats(evidence) {
+    const evidenceCount = document.getElementById('evidence-count');
+    const sourceCount = document.getElementById('source-count');
+    
+    if (evidenceCount) {
+        evidenceCount.textContent = evidence.length;
+    }
+    
+    if (sourceCount) {
+        const uniqueSources = [...new Set(evidence.map(e => e.doc_title))];
+        sourceCount.textContent = uniqueSources.length;
+    }
+}
+
+// Show evidence details in modal
+function showEvidenceDetails(chunk) {
+    const modal = document.getElementById('evidence-modal');
+    const content = document.getElementById('evidence-detail-content');
+    
+    const detailsHTML = `
+        <div class="evidence-detail">
+            <div class="detail-section">
+                <h4>Source Document</h4>
+                <p>${chunk.doc_title || 'Unknown Document'}</p>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Section</h4>
+                <p>${chunk.section || 'Unknown Section'}</p>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Rule Strength</h4>
+                <span class="rule-strength-badge ${chunk.metadata?.rule_strength || 'informational'}">
+                    ${chunk.metadata?.rule_strength || 'informational'}
+                </span>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Relevance Score</h4>
+                <p>${Math.round((chunk.relevance_score || 0) * 100)}%</p>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Evidence Text</h4>
+                <div class="evidence-text-full">${chunk.text}</div>
+            </div>
+            
+            <div class="detail-section">
+                <h4>Metadata</h4>
+                <div class="metadata-grid">
+                    ${chunk.metadata ? Object.entries(chunk.metadata).map(([key, value]) => 
+                        `<div class="metadata-item">
+                            <span class="metadata-key">${key}:</span>
+                            <span class="metadata-value">${value}</span>
+                        </div>`
+                    ).join('') : '<p>No metadata available</p>'}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = detailsHTML;
+    modal.style.display = 'flex';
+}
+
+// Add CSS for evidence details
+const evidenceDetailCSS = `
+.evidence-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-section h4 {
+    color: #1f2937;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.evidence-text-full {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 4px;
+    border-left: 3px solid #3b82f6;
+    line-height: 1.6;
+    color: #4b5563;
+}
+
+.metadata-grid {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.metadata-item {
+    display: flex;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.metadata-key {
+    font-weight: 600;
+    color: #6b7280;
+    min-width: 120px;
+}
+
+.metadata-value {
+    color: #1f2937;
+}
+`;
+
+// Inject CSS
+const styleSheet = document.createElement('style');
+styleSheet.textContent = evidenceDetailCSS;
+document.head.appendChild(styleSheet);
+</script>

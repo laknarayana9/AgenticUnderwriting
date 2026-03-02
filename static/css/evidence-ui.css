@@ -1,0 +1,345 @@
+/* Evidence-First Underwriting UI Styles */
+
+/* Three-Panel Layout */
+.evidence-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    height: calc(100vh - 200px);
+    margin-top: 1rem;
+}
+
+/* Panel Styles */
+.evidence-panel {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    background: #f8fafc;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+/* Source Document Panel */
+.document-viewer {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+}
+
+.document-section {
+    margin-bottom: 2rem;
+}
+
+.document-section h3 {
+    color: #1f2937;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #3b82f6;
+    padding-left: 0.5rem;
+}
+
+.document-section p {
+    color: #4b5563;
+    margin-bottom: 0.75rem;
+}
+
+/* Evidence Highlighting */
+.highlight-mandatory {
+    background-color: #fef2f2;
+    border-left: 3px solid #ef4444;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+}
+
+.highlight-required {
+    background-color: #fff7ed;
+    border-left: 3px solid #f97316;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+}
+
+.highlight-recommended {
+    background-color: #fefce8;
+    border-left: 3px solid #eab308;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+}
+
+.highlight-permissive {
+    background-color: #f0fdf4;
+    border-left: 3px solid #22c55e;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+}
+
+.highlight-informational {
+    background-color: #eff6ff;
+    border-left: 3px solid #3b82f6;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    border-radius: 4px;
+}
+
+/* Citation Tags */
+.citation-tag {
+    display: inline-block;
+    background: #3b82f6;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.citation-tag:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+/* Decision Panel */
+.decision-summary {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.decision-type {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.decision-type.accept {
+    color: #22c55e;
+}
+
+.decision-type.refer {
+    color: #f97316;
+}
+
+.decision-type.decline {
+    color: #ef4444;
+}
+
+.confidence-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.confidence-bar {
+    flex: 1;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.confidence-fill.high {
+    background: #22c55e;
+}
+
+.confidence-fill.medium {
+    background: #eab308;
+}
+
+.confidence-fill.low {
+    background: #ef4444;
+}
+
+/* Evidence List */
+.evidence-item {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.evidence-item:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.evidence-item.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.evidence-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.evidence-source {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.evidence-relevance {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.evidence-text {
+    color: #4b5563;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.evidence-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.rule-strength-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.rule-strength-badge.mandatory {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.rule-strength-badge.required {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.rule-strength-badge.recommended {
+    background: #fefce8;
+    color: #ca8a04;
+}
+
+.rule-strength-badge.permissive {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.rule-strength-badge.informational {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+/* Required Questions */
+.question-item {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.question-priority {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.priority-p0 {
+    background: #dc2626;
+    color: white;
+}
+
+.priority-p1 {
+    background: #ea580c;
+    color: white;
+}
+
+.priority-p2 {
+    background: #ca8a04;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .evidence-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        height: auto;
+    }
+    
+    .evidence-panel {
+        min-height: 400px;
+    }
+}
+
+/* Loading States */
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e5e7eb;
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}

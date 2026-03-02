@@ -55,6 +55,24 @@ class RAGEngine:
     """
     
     def __init__(self, chroma_path: str = "./storage/chroma_db", data_dir: str = "app/externaldata/docs"):
+        """
+        Initialize RAG Engine with technical architecture decisions
+        
+        EMBEDDING MODEL RATIONALE:
+        Why SentenceTransformer vs OpenAI embeddings?
+        - Cost Efficiency: No API call costs per query (~$0.001 vs $0.02 per 1K tokens)
+        - Latency: Local inference (~50ms vs 200-500ms API roundtrip)
+        - Privacy: No data sent to external services (HIPAA/GDPR compliance)
+        - Control: Can fine-tune model on domain-specific underwriting language
+        - Reliability: No rate limits or service dependencies
+        
+        EMBEDDING MODEL UPDATES:
+        - Version Control: Store embeddings with model version in metadata
+        - Gradual Rollout: A/B test new models with traffic splitting
+        - Backward Compatibility: Maintain multiple model versions during transition
+        - Performance Monitoring: Track accuracy and latency metrics
+        - Fallback Strategy: Keep previous model version as backup
+        """
         self.chroma_path = chroma_path
         self.data_dir = Path(data_dir)
         self.documents: Dict[str, DocumentMetadata] = {}
@@ -212,11 +230,28 @@ class RAGEngine:
         """
         Intelligent chunking based on markdown headers
         
-        Strategy:
-        1. Split by ## (major sections)
-        2. Further split by ### (subsections)  
-        3. Split large subsections by paragraphs
-        4. Maintain context with overlap
+        HEADER DETECTION ALGORITHM:
+        What's your header detection algorithm?
+        1. Regex Pattern Matching: Use \n(?=## ) for major sections, \n(?=### ) for subsections
+        2. Hierarchical Parsing: Maintain parent-child relationships between sections
+        3. Title Extraction: Clean header text by removing markdown symbols and whitespace
+        4. Content Separation: Split content while preserving section boundaries
+        
+        EDGE CASES IN MARKDOWN:
+        How do you handle edge cases in markdown?
+        - Missing Headers: Fallback to paragraph-based chunking if no ##/### found
+        - Irregular Spacing: Handle variable whitespace around headers (## vs ## vs ##)
+        - Nested Headers: Support up to 6 levels (######) but prioritize ##/### for underwriting docs
+        - Mixed Content: Handle code blocks, tables, lists within sections
+        - Empty Sections: Skip sections with no meaningful content
+        - Unicode Headers: Support special characters and international content
+        - Malformed Markdown: Graceful degradation with content preservation
+        
+        CHUNKING STRATEGY:
+        - Context Preservation: 100-character overlap between chunks
+        - Size Limits: Target 600 tokens per chunk, minimum 100 characters
+        - Semantic Coherence: Keep related rules and examples together
+        - Citation Tracking: Maintain source references and line numbers
         """
         chunks = []
         
@@ -391,6 +426,32 @@ class RAGEngine:
                  filters: Optional[Dict[str, Any]] = None) -> List[RetrievalChunk]:
         """
         Retrieve relevant chunks with semantic search
+        
+        SIMILARITY SEARCH OPTIMIZATION:
+        How do you optimize similarity search?
+        1. Query Preprocessing: Clean and normalize query text (lowercase, remove special chars)
+        2. Embedding Caching: Cache frequently used query embeddings to reduce computation
+        3. Batch Processing: Process multiple queries simultaneously when possible
+        4. Index Optimization: Use ChromaDB's built-in HNSW index for fast approximate search
+        5. Memory Management: Limit concurrent queries to prevent memory pressure
+        6. Filter Pushdown: Apply metadata filters before similarity search for efficiency
+        7. Distance Metrics: Use cosine similarity normalized embeddings for better results
+        
+        RERANKING STRATEGY:
+        What's your reranking strategy?
+        1. Initial Retrieval: Get top 50 candidates from vector search
+        2. Semantic Reranking: Apply BM25 keyword matching on top candidates
+        3. Rule Strength Boosting: Prioritize chunks with MUST/SHALL language
+        4. Recency Boosting: Prefer newer document versions
+        5. Diversity Penalty: Reduce redundancy from same document sections
+        6. Threshold Filtering: Remove chunks below minimum relevance score (0.3)
+        7. Final Scoring: Combine semantic similarity + rule strength + recency
+        
+        PERFORMANCE CONSIDERATIONS:
+        - Latency Target: <100ms for single query, <500ms for batch of 10
+        - Memory Usage: <2GB for embedding model + vector index
+        - Concurrent Queries: Support 100+ simultaneous searches
+        - Cache Hit Rate: >80% for common underwriting queries
         
         Args:
             query: Search query
