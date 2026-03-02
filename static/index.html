@@ -19,7 +19,7 @@
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Agentic Quote-to-Underwrite</h1>
             <p class="text-gray-600">Insurance quote processing with AI-powered underwriting</p>
         </header>
-
+        
         <!-- Quote Form -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-xl font-semibold mb-4">Submit Quote</h2>
@@ -34,13 +34,13 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Property Address</label>
                         <input type="text" id="address" required
-                               value="123 Main St, Irvine, CA 92620"
+                               value="2231 Watermarke Pl, Irvine, CA 92612"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
                         <select id="property_type" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="single_family" selected>Single Family</option>
                             <option value="condo">Condominium</option>
                             <option value="townhouse">Townhouse</option>
@@ -66,60 +66,36 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Roof Type</label>
-                        <select id="roof_type"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select...</option>
-                            <option value="asphalt_shingle">Asphalt Shingle</option>
-                            <option value="metal">Metal</option>
-                            <option value="tile" selected>Tile</option>
-                            <option value="wood_shake">Wood Shake</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Additional Information</label>
+                        <textarea id="additional_info" rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Foundation Type</label>
-                        <select id="foundation_type"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">Select...</option>
-                            <option value="concrete" selected>Concrete</option>
-                            <option value="crawlspace">Crawlspace</option>
-                            <option value="basement">Basement</option>
-                            <option value="slab">Slab</option>
-                        </select>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="use_agentic" class="mr-2">
+                            <span class="text-sm text-gray-700">Enable Agentic Behavior</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="use_queue" class="mr-2" checked>
+                            <span class="text-sm text-gray-700">Use Async Queue</span>
+                        </label>
                     </div>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Additional Information</label>
-                    <textarea id="additional_info" rows="3"
-                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-
-                <div class="flex items-center space-x-4">
-                    <label class="flex items-center">
-                        <input type="checkbox" id="use_agentic" class="mr-2">
-                        <span class="text-sm text-gray-700">Enable Agentic Behavior</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="checkbox" id="use_queue" class="mr-2" checked>
-                        <span class="text-sm text-gray-700">Use Async Queue</span>
-                    </label>
-                </div>
-
                 <button type="submit" 
                         class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     Process Quote
                 </button>
             </form>
         </div>
-
+        
         <!-- Loading State -->
         <div id="loading" class="loading bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p class="text-blue-800">Processing your quote...</p>
             <p class="text-sm text-blue-600 mt-2">Running underwriting workflow with AI analysis</p>
         </div>
-
+        
         <!-- Queue Status -->
         <div id="queueStatus" class="loading bg-purple-50 border border-purple-200 rounded-lg p-6 text-center" style="display: none;">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -130,7 +106,7 @@
                 Check Status
             </button>
         </div>
-
+        
         <!-- Results -->
         <div id="result" class="result space-y-6">
             <!-- Decision -->
@@ -138,479 +114,359 @@
                 <h3 class="text-lg font-semibold mb-3">Underwriting Decision</h3>
                 <div id="decisionContent"></div>
             </div>
-
+            
             <!-- Premium -->
             <div id="premiumCard" class="bg-white rounded-lg shadow-md p-6" style="display: none;">
                 <h3 class="text-lg font-semibold mb-3">Premium Calculation</h3>
                 <div id="premiumContent"></div>
             </div>
-
+            
             <!-- Required Questions -->
             <div id="questionsCard" class="bg-yellow-50 border border-yellow-200 rounded-lg p-6" style="display: none;">
                 <h3 class="text-lg font-semibold mb-3 text-yellow-800">Additional Information Required</h3>
                 <div id="questionsContent"></div>
             </div>
-
+            
             <!-- Human Review Required -->
             <div id="humanReviewCard" class="bg-orange-50 border border-orange-200 rounded-lg p-6" style="display: none;">
                 <h3 class="text-lg font-semibold mb-3 text-orange-800">Human Review Required</h3>
                 <div id="humanReviewContent"></div>
                 <div id="humanReviewActions" class="mt-4 space-y-3">
-                    <div class="flex items-center space-x-4">
-                        <button onclick="checkReviewStatus()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <button onclick="checkReviewStatus()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                             Check Review Status
                         </button>
-                        <button onclick="showApprovalForm()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <button onclick="showApprovalForm()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                             Approve (Human Reviewer)
                         </button>
-                    </div>
                 </div>
             </div>
-
+            
             <!-- Citations -->
             <div id="citationsCard" class="bg-white rounded-lg shadow-md p-6" style="display: none;">
                 <h3 class="text-lg font-semibold mb-3">Guideline Citations</h3>
                 <div id="citationsContent"></div>
             </div>
-
+            
             <!-- Run Details -->
-            <div class="bg-gray-50 rounded-lg p-6">
+            <div class="bg-gray-50 rounded-lg p-6 mt-6">
                 <h3 class="text-lg font-semibold mb-3">Run Details</h3>
                 <div id="runDetails"></div>
             </div>
-        </div>
-
-        <!-- Recent Runs -->
-        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
-            <h3 class="text-lg font-semibold mb-3">Recent Runs</h3>
-            <div id="recentRuns" class="space-y-2">
-                <p class="text-gray-500">Loading recent runs...</p>
+            
+            <!-- Recent Runs -->
+            <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                <h3 class="text-lg font-semibold mb-3">Recent Runs</h3>
+                <div id="recentRuns" class="space-y-2">
+                    <p class="text-gray-500">Loading recent runs...</p>
+                </div>
+            </div>
+            
+            <!-- Quote ID Lookup -->
+            <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                <h3 class="text-lg font-semibold mb-3">Quote ID Lookup</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Enter Quote ID</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="quoteIdLookup" placeholder="Enter quote ID (e.g., c958e177-a746-471f-900d-edd5826a4f0a)"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onclick="lookupQuote()" 
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                Lookup Quote
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Quote Lookup Results -->
+                    <div id="quoteLookupResults" class="hidden">
+                        <div class="border-t pt-4">
+                            <h4 class="text-md font-semibold mb-3">Quote Details</h4>
+                            <div id="quoteLookupContent" class="space-y-3">
+                                <!-- Results will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
+    
     <script>
         const API_BASE = window.location.origin;
-
+        let currentRunId = null;
+        let conversationState = 'greeting';
+        
+        // DOM Elements
+        const elements = {
+            loading: document.getElementById('loading'),
+            queueStatus: document.getElementById('queueStatus'),
+            queueDetails: document.getElementById('queueDetails'),
+            result: document.getElementById('result'),
+            decisionCard: document.getElementById('decisionCard'),
+            decisionContent: document.getElementById('decisionContent'),
+            premiumCard: document.getElementById('premiumCard'),
+            premiumContent: document.getElementById('premiumContent'),
+            questionsCard: document.getElementById('questionsCard'),
+            questionsContent: document.getElementById('questionsContent'),
+            humanReviewCard: document.getElementById('humanReviewCard'),
+            humanReviewContent: document.getElementById('humanReviewContent'),
+            humanReviewActions: document.getElementById('humanReviewActions'),
+            citationsCard: document.getElementById('citationsCard'),
+            citationsContent: document.getElementById('citationsContent'),
+            runDetails: document.getElementById('runDetails'),
+            recentRuns: document.getElementById('recentRuns'),
+            quoteForm: document.getElementById('quoteForm'),
+            applicantName: document.getElementById('applicant_name'),
+            address: document.getElementById('address'),
+            propertyType: document.getElementById('property_type'),
+            coverageAmount: document.getElementById('coverage_amount'),
+            constructionYear: document.getElementById('construction_year'),
+            squareFootage: document.getElementById('square_footage'),
+            additionalInfo: document.getElementById('additional_info'),
+            useAgentic: document.getElementById('use_agentic'),
+            useQueue: document.getElementById('use_queue'),
+            quoteIdLookup: document.getElementById('quoteIdLookup'),
+            quoteLookupResults: document.getElementById('quoteLookupResults'),
+            quoteLookupContent: document.getElementById('quoteLookupContent')
+        };
+        
         // Form submission
         document.getElementById('quoteForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const formData = {
-                submission: {
-                    applicant_name: document.getElementById('applicant_name').value,
-                    address: document.getElementById('address').value,
-                    property_type: document.getElementById('property_type').value,
-                    coverage_amount: parseFloat(document.getElementById('coverage_amount').value),
-                    construction_year: document.getElementById('construction_year').value ? 
-                                    parseInt(document.getElementById('construction_year').value) : null,
-                    square_footage: document.getElementById('square_footage').value ? 
-                                     parseFloat(document.getElementById('square_footage').value) : null,
-                    roof_type: document.getElementById('roof_type').value || null,
-                    foundation_type: document.getElementById('foundation_type').value || null,
-                    additional_info: document.getElementById('additional_info').value || null
-                },
-                use_agentic: document.getElementById('use_agentic').checked,
-                additional_answers: {}
+                applicant_name: elements.applicantName.value,
+                address: elements.address.value,
+                property_type: elements.propertyType.value,
+                coverage_amount: parseFloat(elements.coverageAmount.value),
+                construction_year: parseInt(elements.constructionYear.value),
+                square_footage: parseInt(elements.squareFootage.value),
+                roof_type: "tile", // Default value since field doesn't exist
+                foundation_type: "concrete", // Default value since field doesn't exist
+                additional_info: elements.additionalInfo.value,
+                use_agentic: elements.useAgentic.checked,
+                use_queue: elements.useQueue.checked
             };
-
-            const useQueue = document.getElementById('use_queue').checked;
-
-            if (useQueue) {
-                // Async processing with queue
-                await submitToQueue(formData);
-            } else {
-                // Sync processing
-                await submitDirectly(formData);
-            }
-        });
-
-        async function submitToQueue(formData) {
-            // Show queue status
-            document.getElementById('queueStatus').style.display = 'block';
-            document.getElementById('loading').classList.remove('show');
-            document.getElementById('result').classList.remove('show');
-
-            try {
-                const response = await fetch(`${API_BASE}/quote/submit`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    // Store message ID for status checking
-                    window.currentMessageId = result.message_id;
-                    
-                    // Update queue details
-                    document.getElementById('queueDetails').innerHTML = `
-                        <div><strong>Message ID:</strong> ${result.message_id}</div>
-                        <div><strong>Status:</strong> ${result.status}</div>
-                        <div><strong>Priority:</strong> ${result.priority}</div>
-                        <div><strong>Estimated Time:</strong> ${result.estimated_processing_time}</div>
-                    `;
-                    
-                    // Start polling for status
-                    startQueuePolling();
-                } else {
-                    alert(`Error: ${result.detail}`);
-                    document.getElementById('queueStatus').style.display = 'none';
-                }
-            } catch (error) {
-                alert(`Network error: ${error.message}`);
-                document.getElementById('queueStatus').style.display = 'none';
-            }
-        }
-
-        async function submitDirectly(formData) {
+            
             // Show loading
-            document.getElementById('loading').classList.add('show');
-            document.getElementById('queueStatus').classList.remove('show');
-            document.getElementById('result').classList.remove('show');
-
+            elements.loading.style.display = 'block';
+            elements.result.style.display = 'none';
+            
             try {
-                const response = await fetch(`${API_BASE}/quote/run`, {
+                const response = await fetch(API_BASE + '/quote/run', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({
+                        submission: formData,
+                        use_agentic: formData.use_agentic || formData.use_queue
+                    })
                 });
-
+                
                 const result = await response.json();
+                currentRunId = result.run_id;
                 
-                if (response.ok) {
-                    displayResults(result);
-                } else {
-                    alert(`Error: ${result.detail}`);
-                }
-            } catch (error) {
-                alert(`Network error: ${error.message}`);
-            } finally {
-                document.getElementById('loading').classList.remove('show');
-            }
-        }
-
-        let queuePollingInterval = null;
-
-        function startQueuePolling() {
-            if (queuePollingInterval) {
-                clearInterval(queuePollingInterval);
-            }
-            
-            queuePollingInterval = setInterval(async () => {
-                await checkQueueStatus(false); // Silent check
-            }, 3000); // Check every 3 seconds
-        }
-
-        function stopQueuePolling() {
-            if (queuePollingInterval) {
-                clearInterval(queuePollingInterval);
-                queuePollingInterval = null;
-            }
-        }
-
-        async function checkQueueStatus(showAlert = true) {
-            if (!window.currentMessageId) {
-                if (showAlert) alert('No message ID available. Please submit a quote first.');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${API_BASE}/queue/${window.currentMessageId}`);
-                const data = await response.json();
+                // Hide loading and show results
+                elements.loading.style.display = 'none';
+                elements.result.style.display = 'block';
                 
-                if (response.ok) {
-                    // Update queue details
-                    const queueDetails = document.getElementById('queueDetails');
-                    queueDetails.innerHTML = `
-                        <div><strong>Message ID:</strong> ${data.id}</div>
-                        <div><strong>Status:</strong> <span class="px-2 py-1 text-xs rounded ${
-                            data.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            data.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                            data.status === 'failed' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                        }">${data.status}</span></div>
-                        <div><strong>Priority:</strong> ${data.priority}</div>
-                        <div><strong>Created:</strong> ${new Date(data.created_at).toLocaleString()}</div>
-                        ${data.started_at ? `<div><strong>Started:</strong> ${new Date(data.started_at).toLocaleString()}</div>` : ''}
-                        ${data.completed_at ? `<div><strong>Completed:</strong> ${new Date(data.completed_at).toLocaleString()}</div>` : ''}
-                        ${data.error_message ? `<div><strong>Error:</strong> ${data.error_message}</div>` : ''}
-                        ${data.retry_count > 0 ? `<div><strong>Retries:</strong> ${data.retry_count}/${data.max_retries}</div>` : ''}
+                // Update decision display
+                elements.decisionContent.innerHTML = `
+                    <div class="space-y-2">
+                        <p class="text-lg"><strong>Decision:</strong> ${result.decision.decision}</p>
+                        <p class="text-gray-600">${result.decision.reason}</p>
+                        <p class="text-sm text-gray-500">Confidence: ${(result.decision.confidence * 100).toFixed(1)}%</p>
+                    </div>
+                `;
+                
+                // Update premium display
+                if (result.premium) {
+                    elements.premiumCard.style.display = 'block';
+                    elements.premiumContent.innerHTML = `
+                        <div class="space-y-2">
+                            <p class="text-lg"><strong>Annual Premium:</strong> $${result.premium.annual_premium.toLocaleString()}</p>
+                            <p class="text-lg"><strong>Monthly Premium:</strong> $${result.premium.monthly_premium.toLocaleString()}</p>
+                            <p class="text-lg"><strong>Coverage Amount:</strong> $${result.premium.coverage_amount.toLocaleString()}</p>
+                        </div>
                     `;
-                    
-                    // If completed, display results
-                    if (data.status === 'completed' && data.payload) {
-                        stopQueuePolling();
-                        document.getElementById('queueStatus').style.display = 'none';
-                        displayResults(data.payload);
-                    } else if (data.status === 'failed') {
-                        stopQueuePolling();
-                        if (showAlert) alert(`Processing failed: ${data.error_message}`);
-                    }
-                } else {
-                    if (showAlert) alert(`Error checking status: ${data.detail}`);
                 }
-            } catch (error) {
-                if (showAlert) alert(`Error checking queue status: ${error.message}`);
-            }
-        }
-
-        function displayResults(result) {
-            // Decision
-            const decisionContent = document.getElementById('decisionContent');
-            const decision = result.decision || {};
-            const decisionColors = {
-                'ACCEPT': 'bg-green-100 text-green-800',
-                'REFER': 'bg-yellow-100 text-yellow-800',
-                'REJECT': 'bg-red-100 text-red-800'
-            };
-            
-            decisionContent.innerHTML = `
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-2xl font-bold">${decision.decision || 'UNKNOWN'}</span>
-                    <span class="px-3 py-1 rounded-full text-sm font-medium ${decisionColors[decision.decision] || 'bg-gray-100 text-gray-800'}">
-                        ${decision.decision || 'UNKNOWN'}
-                    </span>
-                </div>
-                <p class="text-gray-700 mb-4">${decision.reason || decision.rationale || 'No reason provided'}</p>
-                <div class="text-sm text-gray-600">
-                    <strong>Confidence:</strong> ${decision.confidence || 'N/A'}
-                </div>
-            `;
-
-            // Premium (if available)
-            if (result.premium) {
-                document.getElementById('premiumCard').style.display = 'block';
-                document.getElementById('premiumContent').innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <span class="text-sm text-gray-600">Annual Premium</span>
-                            <p class="text-lg font-semibold">$${result.premium.annual_premium || result.premium.total_premium || '0'}</p>
-                        </div>
-                        <div>
-                            <span class="text-sm text-gray-600">Monthly Premium</span>
-                            <p class="text-lg font-semibold">$${result.premium.monthly_premium || '0'}</p>
-                        </div>
-                        <div>
-                            <span class="text-sm text-gray-600">Coverage Amount</span>
-                            <p class="text-lg font-semibold">$${result.premium.coverage_amount || '0'}</p>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Required Questions
-            if (result.required_questions && result.required_questions.length > 0) {
-                document.getElementById('questionsCard').style.display = 'block';
-                document.getElementById('questionsContent').innerHTML = `
-                    <ul class="space-y-2">
-                        ${result.required_questions.map(q => `
-                            <li class="flex items-start">
-                                <span class="text-yellow-600 mr-2">•</span>
-                                <div>
-                                    <strong>${q.question_text || q}</strong>
-                                    ${q.required ? '<span class="text-red-600 text-sm ml-2">(Required)</span>' : ''}
-                                </div>
-                            </li>
-                        `).join('')}
-                    </ul>
-                `;
-            }
-
-            // Citations
-            if (result.citations && result.citations.length > 0) {
-                document.getElementById('citationsCard').style.display = 'block';
-                document.getElementById('citationsContent').innerHTML = `
-                    <ul class="space-y-1">
-                        ${result.citations.map(citation => `
-                            <li class="text-sm text-gray-600">
-                                <span class="font-mono bg-gray-100 px-2 py-1 rounded">${citation.text || citation.doc_id || 'Unknown citation'}</span>
-                                ${citation.relevance_score ? `<span class="ml-2 text-xs text-gray-500">(Relevance: ${citation.relevance_score})</span>` : ''}
-                            </li>
-                        `).join('')}
-                    </ul>
-                `;
-            }
-
-            // Run Details
-            document.getElementById('runDetails').innerHTML = `
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span class="text-gray-600">Run ID:</span>
-                        <p class="font-mono">${result.run_id || 'Unknown'}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Status:</span>
-                        <p class="font-medium">${result.status || 'Unknown'}</p>
-                    </div>
-                </div>
-                ${result.processing_time_ms ? `
-                <div class="mt-2 text-sm text-gray-600">
-                    <strong>Processing Time:</strong> ${result.processing_time_ms}ms
-                </div>
-                ` : ''}
-            `;
-
-            // Human Review Required
-            if (result.requires_human_review) {
-                document.getElementById('humanReviewCard').style.display = 'block';
-                document.getElementById('humanReviewContent').innerHTML = `
-                    <div class="space-y-3">
-                        <div>
-                            <span class="text-gray-600">Review Type:</span>
-                            <p class="font-medium">${result.human_review_details?.review_type || 'Unknown'}</p>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Assigned Reviewer:</span>
-                            <p class="font-medium">${result.human_review_details?.assigned_reviewer || 'Unknown'}</p>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Priority:</span>
-                            <span class="px-2 py-1 text-xs rounded ${
-                                result.human_review_details?.review_priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                            }">${result.human_review_details?.review_priority || 'Unknown'}</span>
-                        </div>
-                        <div>
-                            <span class="text-gray-600">Estimated Review Time:</span>
-                            <p class="font-medium">${result.human_review_details?.estimated_review_time || 'Unknown'}</p>
-                        </div>
-                    </div>
-                `;
-            }
-
-            document.getElementById('result').classList.add('show');
-            
-            // Store current run ID for human review workflow
-            currentRunId = result.run_id;
-            
-            // Reload recent runs
-            loadRecentRuns();
-        }
-
-        async function loadRecentRuns() {
-            try {
-                const response = await fetch(`${API_BASE}/runs?limit=5`);
-                const data = await response.json();
                 
-                const recentRunsDiv = document.getElementById('recentRuns');
-                if (data.runs && data.runs.length > 0) {
-                    recentRunsDiv.innerHTML = data.runs.map(run => `
-                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
-                            <div>
-                                <span class="font-mono text-sm">${run.run_id.substring(0, 8)}...</span>
-                                <span class="text-gray-600 text-sm ml-2">${new Date(run.created_at).toLocaleString()}</span>
-                            </div>
-                            <div>
-                                <span class="px-2 py-1 text-xs rounded ${
-                                    run.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                    run.status === 'failed' ? 'bg-red-100 text-red-800' : 
-                                    'bg-gray-100 text-gray-800'
-                                }">${run.status}</span>
-                                <button onclick="viewRun('${run.run_id}')" class="ml-2 text-blue-600 hover:text-blue-800 text-sm">
-                                    View
-                                </button>
-                            </div>
+                // Handle required questions
+                if (result.required_questions && result.required_questions.length > 0) {
+                    elements.questionsCard.style.display = 'block';
+                    const questionsHtml = result.required_questions.map(q => `
+                        <div class="mb-2 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                            <p class="font-medium">${q.question}</p>
+                            <p class="text-sm text-gray-600">${q.description}</p>
                         </div>
                     `).join('');
+                    elements.questionsContent.innerHTML = questionsHtml;
                 } else {
-                    recentRunsDiv.innerHTML = '<p class="text-gray-500">No recent runs found</p>';
+                    elements.questionsCard.style.display = 'none';
                 }
-            } catch (error) {
-                console.error('Error loading recent runs:', error);
-            }
-        }
-
-        async function viewRun(runId) {
-            try {
-                const response = await fetch(`${API_BASE}/runs/${runId}/audit`);
-                const data = await response.json();
                 
-                alert(`Run ${runId} audit data:\n\n${JSON.stringify(data, null, 2)}`);
+                // Handle human review requirement
+                if (result.requires_human_review) {
+                    elements.humanReviewCard.style.display = 'block';
+                    elements.humanReviewContent.innerHTML = `
+                        <div class="space-y-4">
+                            <p class="text-lg font-semibold text-orange-800">Human Review Required</p>
+                            <p class="text-gray-600">${result.human_review_details.review_type}</p>
+                            <p class="text-sm"><strong>Assigned Reviewer:</strong> ${result.human_review_details.assigned_reviewer}</p>
+                            <p class="text-sm"><strong>Priority:</strong> ${result.human_review_details.review_priority}</p>
+                            <p class="text-sm"><strong>Estimated Review Time:</strong> ${result.human_review_details.estimated_review_time}</p>
+                        </div>
+                    `;
+                    
+                    elements.humanReviewActions.style.display = 'block';
+                } else {
+                    elements.humanReviewCard.style.display = 'none';
+                    elements.humanReviewActions.style.display = 'none';
+                }
+                
+                // Show citations
+                if (result.citations && result.citations.length > 0) {
+                    elements.citationsCard.style.display = 'block';
+                    const citationsHtml = result.citations.map(citation => `
+                        <div class="mb-2 p-3 bg-gray-50 border border-gray-200 rounded">
+                            <p class="font-medium">${citation.text}</p>
+                            <p class="text-sm text-gray-500">Relevance: ${(citation.relevance_score * 100).toFixed(1)}%</p>
+                        </div>
+                    `).join('');
+                    elements.citationsContent.innerHTML = citationsHtml;
+                } else {
+                    elements.citationsCard.style.display = 'none';
+                }
+                
+                // Update run details
+                elements.runDetails.innerHTML = `
+                    <div class="space-y-2">
+                        <p><strong>Run ID:</strong> ${result.run_id}</p>
+                        <p><strong>Status:</strong> ${result.status}</p>
+                        <p><strong>Processing Time:</strong> ${result.processing_time_ms}ms</p>
+                        <p><strong>Message:</strong> ${result.message}</p>
+                    </div>
+                `;
+                
             } catch (error) {
-                alert(`Error loading run details: ${error.message}`);
+                elements.loading.style.display = 'none';
+                elements.result.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-red-800">Error</h3>
+                        <p class="text-red-600">${error.message}</p>
+                    </div>
+                `;
             }
-        }
-
-        let currentRunId = null;
-
-        async function checkReviewStatus() {
+        });
+        
+        // Check queue status
+        async function checkQueueStatus() {
             if (!currentRunId) {
                 alert('No run ID available. Please submit a quote first.');
                 return;
             }
             
             try {
-                const response = await fetch(`${API_BASE}/quote/${currentRunId}/review-status`);
+                elements.loading.style.display = 'block';
+                const response = await fetch(API_BASE + '/queue/' + currentRunId);
                 const data = await response.json();
                 
-                let statusMessage = `Review Status for ${currentRunId}:\n\nStatus: ${data.status}\n`;
+                elements.loading.style.display = 'none';
+                
+                if (data.status === 'completed') {
+                    elements.queueStatus.innerHTML = `
+                        <div class="space-y-2">
+                            <p class="text-green-600"><strong>✓ Processing Complete!</strong></p>
+                            <p class="text-sm">Your quote has been processed successfully.</p>
+                        </div>
+                    `;
+                } else if (data.status === 'processing') {
+                    elements.queueStatus.innerHTML = `
+                        <div class="space-y-2">
+                            <p class="text-blue-600"><strong>🔄 Processing...</strong></p>
+                            <p class="text-sm">Your quote is being processed.</p>
+                            <p class="text-xs text-gray-500">Queue position: ${data.position || 'Unknown'}</p>
+                        </div>
+                    `;
+                } else {
+                    elements.queueStatus.innerHTML = `
+                        <div class="space-y-2">
+                            <p class="text-yellow-600"><strong>⏳ Queued...</strong></p>
+                            <p class="text-sm">Your quote is in the queue.</p>
+                            <p class="text-xs text-gray-500">Queue position: ${data.position || 'Unknown'}</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                elements.loading.style.display = 'none';
+                elements.queueStatus.innerHTML = `<p class="text-red-600">Error checking queue status: ${error.message}</p>`;
+            }
+        }
+        
+        // Review status checking
+        async function checkReviewStatus(runId) {
+            if (!runId) {
+                runId = currentRunId;
+            }
+            if (!runId) {
+                alert('No run ID available. Please submit a quote first.');
+                return;
+            }
+            
+            try {
+                elements.loading.style.display = 'block';
+                const response = await fetch(API_BASE + '/quote/' + runId + '/review-status');
+                const data = await response.json();
+                
+                let statusMessage = 'Review Status for ' + runId + ':\\nStatus: ' + data.status + '\\n';
                 
                 if (data.status === 'human_approved') {
-                    statusMessage += `Final Decision: ${data.final_decision}\n`;
-                    statusMessage += `Reviewer: ${data.reviewer}\n`;
-                    statusMessage += `Approved Premium: $${data.approved_premium}\n`;
-                    statusMessage += `Review Time: ${data.review_timestamp}\n`;
-                    statusMessage += `Notes: ${data.reviewer_notes}`;
+                    statusMessage += 'Final Decision: ' + data.final_decision + '\\n';
+                    statusMessage += 'Reviewer: ' + data.reviewer + '\\n';
+                    statusMessage += 'Approved Premium: $' + data.approved_premium + '\\n';
+                    statusMessage += 'Review Time: ' + new Date(data.review_timestamp).toLocaleString() + '\\n';
+                    statusMessage += 'Notes: ' + data.reviewer_notes + '\\n';
+                    
+                    // Update display to show approved status
+                    elements.humanReviewContent.innerHTML = `
+                        <div class="space-y-4">
+                            <p class="text-lg font-semibold text-green-800">Status: <span class="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">APPROVED</span></p>
+                            <p class="font-medium">Final Decision: ${data.final_decision}</p>
+                            <p class="font-medium">Reviewer: ${data.reviewer}</p>
+                            <p class="font-medium">Approved Premium: $${data.approved_premium}</p>
+                            <p class="font-medium">Review Time: ${new Date(data.review_timestamp).toLocaleString()}</p>
+                            <p class="font-medium">Notes: ${data.reviewer_notes}</p>
+                        </div>
+                    `;
+                    
+                    // Hide approval buttons since it's already approved
+                    if (elements.humanReviewActions) {
+                        elements.humanReviewActions.style.display = 'none';
+                    }
                 } else {
-                    statusMessage += `Priority: ${data.review_priority}\n`;
-                    statusMessage += `Reviewer: ${data.assigned_reviewer}\n`;
-                    statusMessage += `Deadline: ${data.review_deadline}`;
+                    statusMessage += 'Priority: ' + data.review_priority + '\\n';
+                    statusMessage += 'Reviewer: ' + data.assigned_reviewer + '\\n';
+                    statusMessage += 'Deadline: ' + new Date(data.review_deadline).toLocaleString() + '\\n';
                 }
                 
                 alert(statusMessage);
                 
-                // If approved, update the display
-                if (data.status === 'human_approved') {
-                    updateDisplayAfterApproval(data);
-                }
             } catch (error) {
-                alert(`Error checking review status: ${error.message}`);
+                elements.loading.style.display = 'none';
+                alert('Error checking review status: ' + error.message);
+            } finally {
+                elements.loading.style.display = 'none';
             }
         }
-
-        function updateDisplayAfterApproval(approvalData) {
-            // Update the human review card to show approved status
-            const humanReviewContent = document.getElementById('humanReviewContent');
-            humanReviewContent.innerHTML = `
-                <div class="space-y-3">
-                    <div>
-                        <span class="text-gray-600">Status:</span>
-                        <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-800">APPROVED</span>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Final Decision:</span>
-                        <p class="font-medium">${approvalData.final_decision}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Reviewer:</span>
-                        <p class="font-medium">${approvalData.reviewer}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Approved Premium:</span>
-                        <p class="font-medium">$${approvalData.approved_premium}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Review Time:</span>
-                        <p class="font-medium">${new Date(approvalData.review_timestamp).toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <span class="text-gray-600">Notes:</span>
-                        <p class="text-sm">${approvalData.reviewer_notes}</p>
-                    </div>
-                </div>
-            `;
-            
-            // Hide approval buttons since it's already approved
-            document.getElementById('humanReviewActions').style.display = 'none';
-        }
-
-        function showApprovalForm() {
-            if (!currentRunId) {
+        
+        // Approval form
+        function showApprovalForm(runId) {
+            if (!runId) {
+                runId = currentRunId;
+            }
+            if (!runId) {
                 alert('No run ID available. Please submit a quote first.');
                 return;
             }
@@ -625,17 +481,19 @@
                 return;
             }
             
-            approveReview(currentRunId, {
+            approveReview(runId, {
                 final_decision: finalDecision,
                 approved_premium: parseFloat(approvedPremium),
                 reviewer_notes: reviewerNotes,
                 reviewer_name: reviewerName
             });
         }
-
+        
+        // Approve review
         async function approveReview(runId, approvalData) {
             try {
-                const response = await fetch(`${API_BASE}/quote/${runId}/approve`, {
+                elements.loading.style.display = 'block';
+                const response = await fetch(API_BASE + '/quote/' + runId + '/approve', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -645,23 +503,252 @@
                 
                 if (response.ok) {
                     const result = await response.json();
-                    alert(`Review approved successfully!\n\nRun ID: ${result.run_id}\nFinal Decision: ${result.final_decision}\nApproved Premium: $${result.approved_premium}\nReviewer: ${result.reviewer}`);
+                    alert('Review approved successfully!\\n\\nRun ID: ' + result.run_id + '\\nFinal Decision: ' + result.final_decision + '\\nApproved Premium: $' + result.approved_premium + '\\nReviewer: ' + result.reviewer);
                     
                     // Update display to show approved status
-                    updateDisplayAfterApproval(result);
+                    elements.humanReviewContent.innerHTML = `
+                        <div class="space-y-4">
+                            <p class="text-lg font-semibold text-green-800">Status: <span class="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">APPROVED</span></p>
+                            <p class="font-medium">Final Decision: ${result.final_decision}</p>
+                            <p class="font-medium">Reviewer: ${result.reviewer}</p>
+                            <p class="font-medium">Approved Premium: $${result.approved_premium}</p>
+                            <p class="font-medium">Review Time: ${new Date(result.review_timestamp).toLocaleString()}</p>
+                            <p class="font-medium">Notes: ${result.reviewer_notes}</p>
+                        </div>
+                    `;
+                    
+                    // Hide approval buttons since it's already approved
+                    if (elements.humanReviewActions) {
+                        elements.humanReviewActions.style.display = 'none';
+                    }
                     
                     // Reload recent runs to show updated status
                     loadRecentRuns();
                 } else {
                     const error = await response.json();
-                    alert(`Approval failed: ${error.detail}`);
+                    alert('Approval failed: ' + error.detail);
                 }
             } catch (error) {
-                alert(`Error approving review: ${error.message}`);
+                alert('Error approving review: ' + error.message);
+            } finally {
+                elements.loading.style.display = 'none';
             }
         }
-
-        // Load recent runs on page load
+        
+        // Load recent runs
+        async function loadRecentRuns() {
+            try {
+                const response = await fetch(API_BASE + '/runs?limit=100');
+                const data = await response.json();
+                
+                if (data.runs && data.runs.length > 0) {
+                    const runsHtml = data.runs.map((run, index) => {
+                        const decisionColor = run.decision?.decision === 'ACCEPT' ? 'text-green-600' : 
+                                          run.decision?.decision === 'REFER' ? 'text-orange-600' : 
+                                          run.decision?.decision === 'DECLINE' ? 'text-red-600' : 'text-gray-600';
+                        
+                        const reviewBadge = run.requires_human_review ? 
+                            '<span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-800">Review Required</span>' : '';
+                        
+                        return `
+                            <div class="p-3 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <p class="font-medium text-sm">${run.applicant_name}</p>
+                                            ${reviewBadge}
+                                        </div>
+                                        <p class="text-xs text-gray-500 mb-1">${run.address}</p>
+                                        <div class="grid grid-cols-3 gap-2 text-xs">
+                                            <div>
+                                                <span class="text-gray-600">Coverage:</span>
+                                                <span class="font-medium">$${run.coverage_amount?.toLocaleString()}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-600">Premium:</span>
+                                                <span class="font-medium">$${run.premium?.annual_premium?.toLocaleString()}/yr</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-600">Type:</span>
+                                                <span class="font-medium">${run.property_type}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right ml-4">
+                                        <p class="text-xs font-mono text-gray-500 mb-1">${run.run_id}</p>
+                                        <p class="text-xs ${decisionColor} font-medium">${run.decision?.decision || 'Processing'}</p>
+                                        <p class="text-xs text-gray-400">${new Date(run.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div class="mt-2 pt-2 border-t border-gray-100 flex justify-between items-center">
+                                    <p class="text-xs text-gray-500">
+                                        <strong>Processing:</strong> ${run.processing_time_ms}ms
+                                        ${run.decision?.confidence ? `| <strong>Confidence:</strong> ${(run.decision.confidence * 100).toFixed(1)}%` : ''}
+                                    </p>
+                                    <button onclick="lookupQuote('${run.run_id}')" class="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    elements.recentRuns.innerHTML = `
+                        <div class="mb-3 flex justify-between items-center">
+                            <p class="text-sm text-gray-600">Showing ${data.runs.length} of ${data.total_count} quotes</p>
+                            <button onclick="loadRecentRuns()" class="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600">
+                                Refresh
+                            </button>
+                        </div>
+                        <div class="space-y-2 max-h-96 overflow-y-auto">
+                            ${runsHtml}
+                        </div>
+                    `;
+                } else {
+                    elements.recentRuns.innerHTML = '<p class="text-gray-500">No recent runs found.</p>';
+                }
+                
+            } catch (error) {
+                elements.recentRuns.innerHTML = `<p class="text-red-600">Error loading recent runs: ${error.message}</p>`;
+            }
+        }
+        
+        // Quote ID lookup function
+        async function lookupQuote(quoteId = null) {
+            // If no quoteId provided, get from input field
+            if (!quoteId) {
+                quoteId = elements.quoteIdLookup.value.trim();
+            }
+            
+            console.log('lookupQuote called with quoteId:', quoteId);
+            
+            if (!quoteId) {
+                alert('Please enter a quote ID');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                elements.quoteLookupContent.innerHTML = '<p class="text-gray-500">Looking up quote...</p>';
+                elements.quoteLookupResults.classList.remove('hidden');
+                
+                console.log('Fetching quote details for:', quoteId);
+                
+                // Fetch quote details
+                const response = await fetch(API_BASE + '/quote/' + quoteId + '/details');
+                const data = await response.json();
+                
+                console.log('Quote details response:', data);
+                
+                if (response.ok) {
+                    // Display quote details
+                    elements.quoteLookupContent.innerHTML = `
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Quote ID</p>
+                                    <p class="font-mono text-sm">${data.run_id || quoteId}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Status</p>
+                                    <p class="font-medium">${data.status || 'Unknown'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Applicant</p>
+                                    <p class="font-medium">${data.applicant_name || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Address</p>
+                                    <p class="font-medium">${data.address || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Property Type</p>
+                                    <p class="font-medium">${data.property_type || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Coverage Amount</p>
+                                    <p class="font-medium">$${data.coverage_amount?.toLocaleString() || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Decision</p>
+                                    <p class="font-medium">${data.decision?.decision || 'Processing'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Processing Time</p>
+                                    <p class="font-medium">${data.processing_time_ms || 'N/A'}ms</p>
+                                </div>
+                            </div>
+                            
+                            ${data.premium ? `
+                            <div class="border-t pt-3">
+                                <h5 class="font-semibold mb-2">Premium Details</h5>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600">Annual Premium</p>
+                                        <p class="font-medium">$${data.premium.annual_premium.toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600">Monthly Premium</p>
+                                        <p class="font-medium">$${data.premium.monthly_premium.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${data.rce_adjustment ? `
+                            <div class="border-t pt-3">
+                                <h5 class="font-semibold mb-2">RCE Adjustment</h5>
+                                <div class="bg-blue-50 p-3 rounded">
+                                    <p class="text-sm"><strong>Original Coverage:</strong> $${data.rce_adjustment.original_coverage.toLocaleString()}</p>
+                                    <p class="text-sm"><strong>Adjusted Coverage:</strong> $${data.rce_adjustment.adjusted_coverage.toLocaleString()}</p>
+                                    <p class="text-sm"><strong>Increase:</strong> $${data.rce_adjustment.increase_amount.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            ${data.requires_human_review ? `
+                            <div class="border-t pt-3">
+                                <h5 class="font-semibold mb-2">Human Review Status</h5>
+                                <div class="bg-orange-50 p-3 rounded">
+                                    <p class="text-sm"><strong>Status:</strong> ${data.human_review_details?.review_type || 'Pending Review'}</p>
+                                    <p class="text-sm"><strong>Priority:</strong> ${data.human_review_details?.review_priority || 'Normal'}</p>
+                                    <p class="text-sm"><strong>Assigned Reviewer:</strong> ${data.human_review_details?.assigned_reviewer || 'Unassigned'}</p>
+                                </div>
+                                <div class="mt-2 space-x-2">
+                                    <button onclick="checkReviewStatus('${data.run_id || quoteId}')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                        Check Review Status
+                                    </button>
+                                    <button onclick="showApprovalForm('${data.run_id || quoteId}')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                        Approve
+                                    </button>
+                                </div>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="border-t pt-3">
+                                <p class="text-xs text-gray-500">
+                                    <strong>Submitted:</strong> ${data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A'} |
+                                    <strong>Message:</strong> ${data.message || 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.detail || 'Quote not found');
+                }
+                
+            } catch (error) {
+                console.error('Error in lookupQuote:', error);
+                elements.quoteLookupContent.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded p-3">
+                        <p class="text-red-600">Error: ${error.message}</p>
+                        <p class="text-xs text-gray-500 mt-2">Note: Quote lookup requires quotes to be processed and saved to the database. Make sure quote processing is working correctly.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Initialize
         loadRecentRuns();
     </script>
 </body>

@@ -3,7 +3,7 @@ import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
-from models.schemas import RunRecord, WorkflowState, HumanReviewRecord
+from models.schemas import RunRecord, WorkflowState, HumanReviewRecord, QuoteRecord
 
 
 class DateTimeEncoder(json.JSONEncoder):
@@ -72,6 +72,36 @@ class UnderwritingDB:
             
             conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_review_status ON human_review_records(status)
+            """)
+            
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS quote_records (
+                    run_id TEXT PRIMARY KEY,
+                    status TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    processing_time_ms INTEGER NOT NULL,
+                    submission TEXT NOT NULL,
+                    decision TEXT,
+                    premium TEXT,
+                    rce_adjustment TEXT,
+                    requires_human_review BOOLEAN NOT NULL DEFAULT 0,
+                    human_review_details TEXT,
+                    required_questions TEXT,
+                    citations TEXT
+                )
+            """)
+            
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_quote_run_id ON quote_records(run_id)
+            """)
+            
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_quote_status ON quote_records(status)
+            """)
+            
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_quote_timestamp ON quote_records(timestamp)
             """)
             
             conn.execute("""
@@ -267,6 +297,66 @@ class UnderwritingDB:
                 "recent_runs_24h": recent_runs,
                 "runs_by_status": {row['status']: row['count'] for row in status_counts}
             }
+    
+    def save_quote_record(self, record: QuoteRecord) -> str:
+        """
+        Save a quote record to database.
+        """
+        def safe_isoformat(dt):
+            return dt.isoformat() if dt else None
+        
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO quote_records 
+                (run_id, status, timestamp, message, processing_time_ms, 
+                 submission, decision, premium, rce_adjustment, requires_human_review,
+                 human_review_details, required_questions, citations)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                record.run_id,
+                record.status,
+                safe_isoformat(record.timestamp),
+                record.message,
+                record.processing_time_ms,
+                json.dumps(record.submission),
+                json.dumps(record.decision) if record.decision else None,
+                json.dumps(record.premium) if record.premium else None,
+                json.dumps(record.rce_adjustment) if record.rce_adjustment else None,
+                record.requires_human_review,
+                json.dumps(record.human_review_details) if record.human_review_details else None,
+                json.dumps(record.required_questions) if record.required_questions else None,
+                json.dumps(record.citations) if record.citations else None
+            ))
+        
+        return record.run_id
+    
+    def get_quote_record(self, run_id: str) -> Optional[QuoteRecord]:
+        """
+        Retrieve a quote record by ID.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.execute(
+                "SELECT * FROM quote_records WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            
+            if cursor:
+                return QuoteRecord(
+                    run_id=cursor["run_id"],
+                    status=cursor["status"],
+                    timestamp=datetime.fromisoformat(cursor["timestamp"]),
+                    message=cursor["message"],
+                    processing_time_ms=cursor["processing_time_ms"],
+                    submission=json.loads(cursor["submission"]) if cursor["submission"] else {},
+                    decision=json.loads(cursor["decision"]) if cursor["decision"] else None,
+                    premium=json.loads(cursor["premium"]) if cursor["premium"] else None,
+                    rce_adjustment=json.loads(cursor["rce_adjustment"]) if cursor["rce_adjustment"] else None,
+                    requires_human_review=bool(cursor["requires_human_review"]),
+                    human_review_details=json.loads(cursor["human_review_details"]) if cursor["human_review_details"] else None,
+                    required_questions=json.loads(cursor["required_questions"]) if cursor["required_questions"] else None,
+                    citations=json.loads(cursor["citations"]) if cursor["citations"] else None
+                )
+            return None
 
 
 # Global database instance

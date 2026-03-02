@@ -10,11 +10,15 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 import json
+import sqlite3
 
 from config import settings
 
 # Import database for persistent storage
 from storage.database import UnderwritingDB, get_db
+
+# Import schemas
+from models.schemas import HumanReviewRecord, QuoteRecord
 
 # Database-backed storage for human review approvals
 # Note: Using database instead of in-memory storage for persistence
@@ -44,6 +48,10 @@ def create_complete_app() -> FastAPI:
     import os
     if os.path.exists("static"):
         app.mount("/static", StaticFiles(directory="static"), name="static")
+    
+    # Include Verisk mock API router
+    from app.verisk_mock import router as verisk_router
+    app.include_router(verisk_router)
     
     # Import PDF parser for property data
     from app.pdf_parser import initialize_property_cache, get_property_cache
@@ -101,7 +109,10 @@ def create_complete_app() -> FastAPI:
                 "runs": "/runs",
                 "metrics": "/metrics",
                 "human_review": "/quote/{run_id}/approve",
-                "review_status": "/quote/{run_id}/review-status"
+                "review_status": "/quote/{run_id}/review-status",
+                "properties": "/properties",
+                "properties/search": "/properties/search",
+                "properties/stats": "/properties/stats"
             }
         }
     
@@ -286,6 +297,25 @@ def create_complete_app() -> FastAPI:
                 "processing_time_ms": 150
             }
             
+            # Save quote record to database
+            db_instance = get_db()
+            quote_record = QuoteRecord(
+                run_id=run_id,
+                status="completed",
+                timestamp=datetime.now(),
+                message=response["message"],
+                processing_time_ms=response["processing_time_ms"],
+                submission=submission,
+                decision=response["decision"],
+                premium=response["premium"],
+                rce_adjustment=response["rce_adjustment"],
+                requires_human_review=response["requires_human_review"],
+                human_review_details=response["human_review_details"],
+                required_questions=response["required_questions"],
+                citations=response["citations"]
+            )
+            db_instance.save_quote_record(quote_record)
+            
             return response
             
         except HTTPException:
@@ -297,27 +327,73 @@ def create_complete_app() -> FastAPI:
             )
     
     @app.get("/runs")
-    async def list_runs(limit: int = 50, offset: int = 0):
+    async def list_runs(limit: int = 100, offset: int = 0):
         """
-        List recent runs with pagination.
+        List recent runs with pagination from database.
         """
-        # Mock data
-        mock_runs = [
-            {
-                "run_id": str(uuid.uuid4()),
-                "status": "completed",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat()
+        try:
+            db_instance = get_db()
+            
+            # Get quote records from database
+            with sqlite3.connect(db_instance.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute(
+                    "SELECT run_id, status, timestamp, message, processing_time_ms, "
+                    "submission, decision, premium, requires_human_review "
+                    "FROM quote_records "
+                    "ORDER BY timestamp DESC "
+                    "LIMIT ? OFFSET ?",
+                    (limit, offset)
+                )
+                rows = cursor.fetchall()
+                
+                # Get total count
+                total_count = conn.execute(
+                    "SELECT COUNT(*) FROM quote_records"
+                ).fetchone()[0]
+            
+            # Convert to response format
+            runs = []
+            for row in rows:
+                try:
+                    submission = json.loads(row["submission"]) if row["submission"] else {}
+                    decision = json.loads(row["decision"]) if row["decision"] else {}
+                    premium = json.loads(row["premium"]) if row["premium"] else {}
+                    
+                    runs.append({
+                        "run_id": row["run_id"],
+                        "status": row["status"],
+                        "created_at": row["timestamp"],
+                        "updated_at": row["timestamp"],
+                        "applicant_name": submission.get("applicant_name", "Unknown"),
+                        "address": submission.get("address", "Unknown"),
+                        "property_type": submission.get("property_type", "unknown"),
+                        "coverage_amount": submission.get("coverage_amount", 0),
+                        "decision": decision,
+                        "premium": premium,
+                        "requires_human_review": bool(row["requires_human_review"]),
+                        "processing_time_ms": row["processing_time_ms"]
+                    })
+                except json.JSONDecodeError as e:
+                    # Skip malformed records
+                    continue
+            
+            return {
+                "runs": runs,
+                "total_count": total_count,
+                "limit": limit,
+                "offset": offset
             }
-            for _ in range(3)
-        ]
-        
-        return {
-            "runs": mock_runs,
-            "total_count": len(mock_runs),
-            "limit": limit,
-            "offset": offset
-        }
+            
+        except Exception as e:
+            # If database fails, return empty response rather than mock data
+            return {
+                "runs": [],
+                "total_count": 0,
+                "limit": limit,
+                "offset": offset,
+                "error": f"Database error: {str(e)}"
+            }
     
     @app.get("/runs/{run_id}")
     async def get_run_status(run_id: str):
@@ -383,6 +459,53 @@ def create_complete_app() -> FastAPI:
             "status": "healthy"
         }
     
+    @app.get("/quote/{run_id}/details")
+    async def get_quote_details(run_id: str):
+        """
+        Get detailed quote information from database.
+        """
+        try:
+            db_instance = get_db()
+            quote_record = db_instance.get_quote_record(run_id)
+            
+            if not quote_record:
+                raise HTTPException(status_code=404, detail="Quote not found")
+            
+            # Get human review status if available
+            review_record = db_instance.get_human_review_record(run_id)
+            
+            return {
+                "run_id": quote_record.run_id,
+                "status": quote_record.status,
+                "timestamp": quote_record.timestamp.isoformat(),
+                "message": quote_record.message,
+                "processing_time_ms": quote_record.processing_time_ms,
+                "applicant_name": quote_record.submission.get("applicant_name"),
+                "address": quote_record.submission.get("address"),
+                "property_type": quote_record.submission.get("property_type"),
+                "coverage_amount": quote_record.submission.get("coverage_amount"),
+                "construction_year": quote_record.submission.get("construction_year"),
+                "square_footage": quote_record.submission.get("square_footage"),
+                "decision": quote_record.decision,
+                "premium": quote_record.premium,
+                "rce_adjustment": quote_record.rce_adjustment,
+                "requires_human_review": quote_record.requires_human_review,
+                "human_review_details": quote_record.human_review_details,
+                "required_questions": quote_record.required_questions,
+                "citations": quote_record.citations,
+                "review_status": review_record.status if review_record else None,
+                "final_decision": review_record.final_decision if review_record else None,
+                "reviewer": review_record.reviewer if review_record else None,
+                "approved_premium": review_record.approved_premium if review_record else None,
+                "review_timestamp": review_record.review_timestamp.isoformat() if review_record and review_record.review_timestamp else None,
+                "reviewer_notes": review_record.reviewer_notes if review_record else None
+            }
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error retrieving quote details: {str(e)}")
+    
     @app.get("/stats")
     async def get_statistics():
         """
@@ -418,15 +541,22 @@ def create_complete_app() -> FastAPI:
             
             # Store in database for persistence
             db_instance = get_db()
-            db_instance.save_human_review_record(
+            review_record = HumanReviewRecord(
                 run_id=run_id,
                 status="human_approved",
-                original_decision="REFER",
+                requires_human_review=True,
                 final_decision=approval_data.get("final_decision", "REFER"),
-                reviewer_notes=approval_data.get("reviewer_notes", ""),
+                reviewer=approval_data.get("reviewer_name", "Human Reviewer"),
+                review_timestamp=datetime.now(),
                 approved_premium=approval_data.get("approved_premium", 0),
-                reviewer=approval_data.get("reviewer_name", "Human Reviewer")
+                reviewer_notes=approval_data.get("reviewer_notes", ""),
+                review_priority="high",
+                assigned_reviewer=approval_data.get("reviewer_name", "Human Reviewer"),
+                estimated_review_time="30 minutes",
+                submission_timestamp=datetime.now(),
+                review_deadline=datetime.now() + timedelta(hours=24)
             )
+            db_instance.save_human_review_record(review_record)
             
             return approval_record
             
@@ -596,5 +726,107 @@ def create_complete_app() -> FastAPI:
             logger.info("Redis connections closed")
         except Exception as e:
             logger.error(f"Error closing Redis connections: {e}")
+    
+    # Properties endpoints
+    @app.get("/properties")
+    async def get_all_properties():
+        """Get all properties from PDF cache"""
+        try:
+            property_cache = get_property_cache()
+            properties = property_cache.get_all_properties()
+            
+            return {
+                "properties": [
+                    {
+                        "address": prop.address,
+                        "property_type": prop.property_type,
+                        "year_built": prop.year_built,
+                        "square_footage": prop.square_footage,
+                        "replacement_cost_estimate": prop.replacement_cost_estimate,
+                        "wildfire_risk": prop.wildfire_risk,
+                        "flood_risk": prop.flood_risk
+                    }
+                    for prop in properties
+                ],
+                "total_count": len(properties),
+                "source": "pdf_cache"
+            }
+        except Exception as e:
+            logger.error(f"Error getting properties: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to get properties: {str(e)}")
+    
+    @app.get("/properties/search")
+    async def search_properties(query: str = "", limit: int = 10):
+        """Search properties by address"""
+        try:
+            property_cache = get_property_cache()
+            properties = property_cache.get_all_properties()
+            
+            # Filter properties by address query
+            if query:
+                query_lower = query.lower()
+                filtered_properties = [
+                    prop for prop in properties
+                    if query_lower in prop.address.lower()
+                ]
+            else:
+                filtered_properties = properties
+            
+            # Limit results
+            limited_properties = filtered_properties[:limit]
+            
+            return {
+                "properties": [
+                    {
+                        "address": prop.address,
+                        "property_type": prop.property_type,
+                        "year_built": prop.year_built,
+                        "square_footage": prop.square_footage,
+                        "replacement_cost_estimate": prop.replacement_cost_estimate,
+                        "wildfire_risk": prop.wildfire_risk,
+                        "flood_risk": prop.flood_risk
+                    }
+                    for prop in limited_properties
+                ],
+                "query": query,
+                "total_found": len(filtered_properties),
+                "returned_count": len(limited_properties),
+                "limit": limit
+            }
+        except Exception as e:
+            logger.error(f"Error searching properties: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to search properties: {str(e)}")
+    
+    @app.get("/properties/stats")
+    async def get_property_stats():
+        """Get property statistics"""
+        try:
+            property_cache = get_property_cache()
+            properties = property_cache.get_all_properties()
+            
+            # Calculate statistics
+            total_properties = len(properties)
+            property_types = {}
+            risk_levels = {"LOW": 0, "MODERATE": 0, "HIGH": 0}
+            
+            for prop in properties:
+                # Count by property type
+                prop_type = prop.property_type
+                property_types[prop_type] = property_types.get(prop_type, 0) + 1
+                
+                # Count by risk level
+                overall_risk = prop.wildfire_risk  # Using wildfire risk as overall
+                if overall_risk in risk_levels:
+                    risk_levels[overall_risk] += 1
+            
+            return {
+                "total_properties": total_properties,
+                "property_types": property_types,
+                "risk_distribution": risk_levels,
+                "average_replacement_cost": sum(prop.replacement_cost_estimate for prop in properties) / total_properties if total_properties > 0 else 0
+            }
+        except Exception as e:
+            logger.error(f"Error getting property stats: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to get property stats: {str(e)}")
     
     return app

@@ -187,3 +187,23 @@ class HumanReviewRecord(BaseModel):
     estimated_review_time: Optional[str] = None
     submission_timestamp: Optional[datetime] = None
     review_deadline: Optional[datetime] = None
+
+
+class QuoteRecord(BaseModel):
+    model_config = ConfigDict(json_encoders={
+        datetime: lambda v: v.isoformat()
+    })
+    
+    run_id: str
+    status: str  # e.g., "completed", "processing"
+    timestamp: datetime
+    message: str
+    processing_time_ms: int
+    submission: Dict[str, Any]  # Original submission data
+    decision: Optional[Dict[str, Any]] = None  # Decision details
+    premium: Optional[Dict[str, Any]] = None  # Premium calculation
+    rce_adjustment: Optional[Dict[str, Any]] = None  # RCE adjustment info
+    requires_human_review: bool = False
+    human_review_details: Optional[Dict[str, Any]] = None
+    required_questions: Optional[List[Dict[str, Any]]] = None
+    citations: Optional[List[Dict[str, Any]]] = None
