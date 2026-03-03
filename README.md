@@ -1,6 +1,6 @@
-# Agentic Quote-to-Underwrite Workflow
+# Agentic Quote-to-Underwrite Workflow (Work in Progress)
 
-A 2-day working version of an agentic insurance quote processing and underwriting system built with LangGraph, FastAPI, and RAG.
+A working version of an agentic insurance quote processing and underwriting system built with LangGraph, FastAPI, and RAG.
 
 ## ✅ Features Implemented
 

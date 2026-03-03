@@ -1,7 +1,7 @@
 {
   "name": "agenticquote",
   "version": "1.0.0",
-  "description": "A 2-day working version of an agentic insurance quote processing and underwriting system built with LangGraph, FastAPI, and RAG.",
+  "description": "A working version of an agentic insurance quote processing and underwriting system built with LangGraph, FastAPI, and RAG.",
   "main": "index.js",
   "directories": {
     "doc": "docs",
