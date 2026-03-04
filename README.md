@@ -1,6 +1,24 @@
 # Agentic Quote-to-Underwrite Workflow (Work in Progress)
 
-A working version of an agentic insurance quote processing and underwriting system built with LangGraph, FastAPI, and RAG.
+An agentic insurance quote processing and underwriting system built with LangGraph, FastAPI, and RAG. This production-ready platform demonstrates how intelligent agents can transform complex insurance workflows into automated, evidence-driven decision-making processes.
+
+## 🎯 **Key Capabilities**
+
+- **🔄 Multi-Step Workflow Orchestration**: Simplifies complex underwriting processes through intelligent agent coordination
+- **🛠️ Tool Integration**: Seamlessly combines multiple APIs and services (address validation, hazard scoring, rating engines) to complete end-to-end quote processing
+- **🧠 Intelligent Decision Making**: Handles missing information automatically and provides evidence-based decisions with RAG-powered citations
+- **🔍 Evidence-Based Underwriting**: Every decision is backed by verifiable guidelines and regulatory requirements
+- **⚡ Real-Time Processing**: Production-grade performance with comprehensive audit trails
+
+## 🚀 **Agent Intelligence Demo**
+
+This system serves as a comprehensive demonstration of building sophisticated agentic systems that can:
+
+- **Scale Complexity**: Handle increasingly intricate insurance workflows while maintaining accuracy
+- **Adapt and Learn**: Process edge cases and exceptions through intelligent reasoning
+- **Ensure Compliance**: Maintain regulatory adherence through automated citation tracking
+- **Provide Transparency**: Full audit trails for every decision and recommendation
+
 
 ## ✅ Features Implemented
 

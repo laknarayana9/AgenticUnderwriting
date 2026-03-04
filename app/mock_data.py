@@ -14,7 +14,7 @@ MOCK_KNOWLEDGE_BASE = {
             "modality": "text",
             "relevance": 0.92,
             "evidence_strength": "mandatory",
-            "source": "mock",
+            "source": "mock"
         }
     ],
     "wildfire": [
@@ -27,7 +27,7 @@ MOCK_KNOWLEDGE_BASE = {
             "modality": "text",
             "relevance": 0.94,
             "evidence_strength": "required",
-            "source": "mock",
+            "source": "mock"
         }
     ],
     "age": [
@@ -40,16 +40,18 @@ MOCK_KNOWLEDGE_BASE = {
             "modality": "text",
             "relevance": 0.87,
             "evidence_strength": "recommended",
-            "source": "mock",
+            "source": "mock"
         }
     ],
     "default": [
         {
-            "content": ("Underwriting guidelines for residential properties in California"),
+            "content": (
+                "Underwriting guidelines for residential properties in California"
+            ),
             "modality": "text",
             "relevance": 0.85,
             "evidence_strength": "required",
-            "source": "mock",
+            "source": "mock"
         }
     ],
 }
@@ -75,8 +77,7 @@ def get_mock_results(query: str, context: dict) -> list:
 
     # Return default results if no keyword match
     default_results = MOCK_KNOWLEDGE_BASE["default"].copy()
-    default_results[0]["content"] = (
-        f"Underwriting guidelines for {context.get('property_type', 'residential')} "
-        f"properties in {context.get('location', 'California')}"
-    )
+    default_results[0][
+        "content"
+    ] = f"Underwriting guidelines for {context.get('property_type', 'residential')} properties in {context.get('location', 'California')}"
     return default_results

@@ -125,8 +125,7 @@ class AdvancedReasoningEngine:
         )
 
         logger.info(
-            f"⚖️ Intelligent reasoning completed: {primary_decision} "
-            f"(confidence: {calibrated_confidence:.3f})"
+            f"⚖️ Intelligent reasoning completed: {primary_decision} (confidence: {calibrated_confidence:.3f})"
         )
         return decision
 
